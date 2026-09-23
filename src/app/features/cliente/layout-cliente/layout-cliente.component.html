@@ -1,0 +1,29 @@
+<div class="cliente-layout">
+  <header class="navbar">
+    <a routerLink="/" class="brand">
+      <span class="brand-icon">🍿</span>
+      <span class="brand-title">Cine<span class="brand-highlight">UTN</span></span>
+    </a>
+    
+    <nav class="nav-links">
+      <a routerLink="/cartelera" routerLinkActive="active">Cartelera</a>
+      @if (authService.usuarioActual()) {
+        <a routerLink="/mis-reservas" routerLinkActive="active">Mis Reservas</a>
+        @if (authService.usuarioActual()?.rol === 'admin') {
+          <a routerLink="/admin" style="color: var(--accent-gold);">Panel Admin</a>
+        }
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      } @else {
+        <a routerLink="/login" class="btn-login">Iniciar Sesión</a>
+      }
+    </nav>
+  </header>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 CineUTN - Todos los derechos reservados. Tu cine de confianza.</p>
+  </footer>
+</div>

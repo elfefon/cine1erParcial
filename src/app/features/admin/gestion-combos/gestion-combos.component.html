@@ -1,0 +1,60 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Gestión de Combos</h2>
+    <p>Agregá combos de pochoclos y golosinas para los clientes del cine</p>
+  </div>
+
+  <div class="form-card">
+    <h3>Nuevo Combo</h3>
+
+    <form [formGroup]="comboForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="nombre">Nombre del Combo</label>
+          <input id="nombre" type="text" placeholder="Ej. Combo Balde XL" formControlName="nombre">
+        </div>
+
+        <div class="form-group">
+          <label for="precio">Precio ($)</label>
+          <input id="precio" type="number" min="0" placeholder="0" formControlName="precio">
+        </div>
+
+        <div class="form-group full-width">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" rows="3" placeholder="Detalle del contenido del combo..." formControlName="descripcion"></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save" [disabled]="comboForm.invalid">💾 Guardar Combo</button>
+    </form>
+  </div>
+
+  <div class="table-card">
+    <h3>Combos Disponibles</h3>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of combos(); track c.id) {
+          <tr>
+            <td style="font-weight: 700;">🍿 {{ c.nombre }}</td>
+            <td><span class="price-tag">${{ c.precio }}</span></td>
+            <td style="color: var(--text-muted);">{{ c.descripcion }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No hay combos registrados aún.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

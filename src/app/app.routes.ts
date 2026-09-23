@@ -1,3 +1,42 @@
 import { Routes } from '@angular/router';
+import { LoginComponent } from './features/auth/login/login.component';
+import { RegistroComponent } from './features/auth/registro/registro.component';
+import { LayoutAdminComponent } from './features/admin/layout-admin/layout-admin.component';
+import { GestionPeliculasComponent } from './features/admin/gestion-peliculas/gestion-peliculas.component';
+import { GestionCombosComponent } from './features/admin/gestion-combos/gestion-combos.component';
+import { HistorialAccionesComponent } from './features/admin/historial-acciones/historial-acciones.component';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
-export const routes: Routes = [];
+import { LayoutClienteComponent } from './features/cliente/layout-cliente/layout-cliente.component';
+import { CarteleraComponent } from './features/cliente/cartelera/cartelera.component';
+import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
+import { ReservaButacasComponent } from './features/cliente/reserva-butacas/reserva-butacas.component';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'registro', component: RegistroComponent },
+  {
+    path: 'admin',
+    component: LayoutAdminComponent,
+    canActivate: [authGuard],
+    canMatch: [adminGuard],
+    children: [
+      { path: '', redirectTo: 'peliculas', pathMatch: 'full' },
+      { path: 'peliculas', component: GestionPeliculasComponent },
+      { path: 'combos', component: GestionCombosComponent },
+      { path: 'historial', component: HistorialAccionesComponent }
+    ]
+  },
+  {
+    path: '',
+    component: LayoutClienteComponent,
+    children: [
+      { path: '', redirectTo: 'cartelera', pathMatch: 'full' },
+      { path: 'cartelera', component: CarteleraComponent },
+      { path: 'pelicula/:id', component: DetallePeliculaComponent },
+      { path: 'reserva/:id', component: ReservaButacasComponent }
+    ]
+  },
+  { path: '**', redirectTo: 'cartelera' }
+];

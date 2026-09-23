@@ -1,0 +1,39 @@
+<div class="registro-wrapper">
+  <div class="registro-card">
+    <div class="auth-header">
+      <div class="logo">🍿 CineUTN</div>
+      <h2>Crear Cuenta</h2>
+      <p class="subtitle">Registrate para disfrutar de los mejores estrenos y beneficios</p>
+    </div>
+    
+    @if (error) {
+      <div class="error-msg">
+        <span class="icon">⚠️</span>
+        {{ error }}
+      </div>
+    }
+    
+    <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="nombre">Nombre Completo</label>
+        <input id="nombre" type="text" placeholder="Juan Pérez" formControlName="nombre">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="ejemplo@correo.com" formControlName="email">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Contraseña (Mínimo 6 caracteres)</label>
+        <input id="password" type="password" placeholder="••••••••" formControlName="password">
+      </div>
+      
+      <button type="submit" class="btn-submit" [disabled]="registroForm.invalid">Registrarse</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>¿Ya tenés una cuenta? <a routerLink="/login">Iniciá sesión aquí</a></p>
+    </div>
+  </div>
+</div>

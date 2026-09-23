@@ -1,0 +1,37 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Historial de Acciones</h2>
+    <p>Registro de actividades y cambios realizados por los administradores</p>
+  </div>
+
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Administrador</th>
+          <th>Acción Realizada</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (accion of historial(); track accion.id) {
+          <tr>
+            <td class="date-text">📅 {{ accion.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="admin-text">👤 {{ accion.administrador | titlecase }}</td>
+            <td>
+              <span class="action-badge">
+                ⚡ {{ accion.tipo | traducirAccion }}
+              </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No hay acciones registradas en el historial.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

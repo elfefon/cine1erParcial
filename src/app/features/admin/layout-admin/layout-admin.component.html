@@ -1,0 +1,36 @@
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="icon">🎬</span>
+      <div>
+        <h3>CineUTN <span class="admin-badge">Admin</span></h3>
+      </div>
+    </div>
+
+    <nav>
+      <ul>
+        <li>
+          <a routerLink="peliculas" routerLinkActive="active">
+            <span>📹</span> Películas
+          </a>
+        </li>
+        <li>
+          <a routerLink="combos" routerLinkActive="active">
+            <span>🍿</span> Combos
+          </a>
+        </li>
+        <li>
+          <a routerLink="historial" routerLinkActive="active">
+            <span>📋</span> Historial
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <button class="btn-logout" (click)="logout()">🔒 Cerrar Sesión</button>
+  </aside>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

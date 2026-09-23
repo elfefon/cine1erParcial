@@ -1,0 +1,69 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Gestión de Películas</h2>
+    <p>Agregá nuevas películas a la cartelera y administrá el catálogo</p>
+  </div>
+
+  <div class="form-card">
+    <h3>Nueva Película</h3>
+
+    <form [formGroup]="peliculaForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="titulo">Título de la película</label>
+          <input id="titulo" type="text" placeholder="Ej. Avatar" formControlName="titulo">
+        </div>
+
+        <div class="form-group">
+          <label for="poster_url">URL del Póster</label>
+          <input id="poster_url" type="text" placeholder="https://..." formControlName="poster_url">
+        </div>
+
+        <div class="form-group full-width">
+          <label for="sinopsis">Sinopsis</label>
+          <textarea id="sinopsis" rows="3" placeholder="Resumen de la trama de la película..." formControlName="sinopsis"></textarea>
+        </div>
+
+        <div class="form-group full-width checkbox-group">
+          <input id="activa" type="checkbox" formControlName="activa">
+          <label for="activa">Película activa en cartelera</label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid">💾 Guardar Película</button>
+    </form>
+  </div>
+
+  <div class="table-card">
+    <h3>Películas Registradas</h3>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Sinopsis</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of peliculas(); track p.id) {
+          <tr>
+            <td style="font-weight: 700;">{{ p.titulo }}</td>
+            <td style="color: var(--text-muted); max-width: 400px;">{{ p.sinopsis }}</td>
+            <td>
+              <span class="status-badge" [class.activa]="p.activa" [class.inactiva]="!p.activa">
+                {{ p.activa ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No hay películas en la base de datos.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
