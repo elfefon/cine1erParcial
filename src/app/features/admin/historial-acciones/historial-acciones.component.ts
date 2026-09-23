@@ -16,11 +16,11 @@ export class HistorialAccionesComponent implements OnInit {
   historial = signal<Accion[]>([]);
 
   async ngOnInit() {
-    await this.cargarHistorial();
+    await this.cargarDatos();
   }
 
-  async cargarHistorial() {
-    const data = await this.supabase.getTableData<Accion>('historial_acciones');
+  async cargarDatos() {
+    const data = await this.supabase.getTableData<Accion>('activity_logs');
     this.historial.set(data);
   }
 }

@@ -68,10 +68,10 @@ export class ReservaButacasComponent implements OnInit {
   }
 
   async cargarDatos() {
-    const resPeli = await this.supabase.client.from('peliculas').select('*').eq('id', this.peliculaId()).single();
+    const resPeli = await this.supabase.client.from('movies').select('*').eq('id', this.peliculaId()).single();
     if (resPeli.data) this.pelicula.set(resPeli.data);
 
-    const dataCombos = await this.supabase.getTableData<Combo>('combos');
+    const dataCombos = await this.supabase.getTableData<Combo>('candy_products');
     this.combosDisponibles.set(dataCombos);
   }
 
@@ -120,7 +120,7 @@ export class ReservaButacasComponent implements OnInit {
         fecha: new Date().toISOString()
       };
 
-      await this.supabase.insertData('reservas', payload);
+      await this.supabase.insertData('tickets', payload);
       this.mensajeExito.set('¡Reserva confirmada con éxito!');
       
       setTimeout(() => {

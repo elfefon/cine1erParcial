@@ -18,7 +18,11 @@ export class RegistroComponent {
   registroForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    fecha_nacimiento: ['', Validators.required],
+    tipo_sangre: ['', Validators.required],
+    color_ojos: ['', Validators.required],
+    vacaciones_anuales: ['', Validators.required]
   });
 
   error: string | null = null;
@@ -27,12 +31,19 @@ export class RegistroComponent {
     if (this.registroForm.valid) {
       try {
         this.error = null;
-        const { email, password, nombre } = this.registroForm.getRawValue();
-        await this.authService.signUp(email, password, nombre);
+        const { email, password, nombre, fecha_nacimiento, tipo_sangre, color_ojos, vacaciones_anuales } = this.registroForm.getRawValue();
+        console.log(`Intentando registrar usuario: ${nombre} - Email: ${email}`);
+        
+        await this.authService.signUp(email, password, nombre, fecha_nacimiento, tipo_sangre, color_ojos, vacaciones_anuales);
+        
+        console.log(`¡Usuario registrado exitosamente!: ${nombre} - Email: ${email}`);
         this.router.navigate(['/']); 
       } catch (err: any) {
+        console.error('Error arrojado por Supabase al registrar:', err);
         this.error = err.message || 'Error al registrarse';
       }
+    } else {
+      console.log('El formulario es inválido y no se enviará. Revisa los campos y las validaciones.');
     }
   }
 }

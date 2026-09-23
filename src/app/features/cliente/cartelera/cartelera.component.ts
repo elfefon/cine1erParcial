@@ -16,7 +16,7 @@ export class CarteleraComponent implements OnInit {
   peliculas = signal<Pelicula[]>([]);
 
   async ngOnInit() {
-    const data = await this.supabase.getTableData<Pelicula>('peliculas');
+    const data = await this.supabase.getTableData<Pelicula>('movies');
     this.peliculas.set(data.filter(p => p.activa));
   }
 }

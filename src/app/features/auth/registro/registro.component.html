@@ -29,6 +29,26 @@
         <input id="password" type="password" placeholder="••••••••" formControlName="password">
       </div>
       
+      <div class="form-group">
+        <label for="fechaNacimiento">Fecha de Nacimiento</label>
+        <input id="fechaNacimiento" type="date" formControlName="fecha_nacimiento">
+      </div>
+      
+      <div class="form-group">
+        <label for="tipoSangre">Tipo de Sangre</label>
+        <input id="tipoSangre" type="text" placeholder="A+" formControlName="tipo_sangre">
+      </div>
+      
+      <div class="form-group">
+        <label for="colorOjos">Color de Ojos</label>
+        <input id="colorOjos" type="text" placeholder="Azul" formControlName="color_ojos">
+      </div>
+      
+      <div class="form-group">
+        <label for="vacacionesAnuales">Vacaciones Anuales</label>
+        <input id="vacacionesAnuales" type="number" placeholder="20" formControlName="vacaciones_anuales">
+      </div>
+      
       <button type="submit" class="btn-submit" [disabled]="registroForm.invalid">Registrarse</button>
     </form>
 

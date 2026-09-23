@@ -32,13 +32,18 @@ export class AuthService {
   private async loadUserProfile(user: User) {
     try {
       const { data, error } = await this.supabaseService.client
-        .from('usuarios')
+        .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
         
       if (data) {
-        this.usuarioActual.set(data as Usuario);
+        const usuario: Usuario = {
+          ...data,
+          rol: data.role || 'cliente',
+          email: user.email || ''
+        };
+        this.usuarioActual.set(usuario);
       }
     } catch (e) {
       console.error('Error loading user profile', e);
@@ -51,15 +56,52 @@ export class AuthService {
     return data;
   }
 
-  async signUp(email: string, password: string, nombre: string) {
+  async signUp(
+    email: string,
+    password: string,
+    nombre: string,
+    fecha_nacimiento?: string,
+    tipo_sangre?: string,
+    color_ojos?: string,
+    vacaciones_anuales?: string | number
+  ) {
     const { data, error } = await this.supabaseService.auth.signUp({ 
       email, 
       password,
       options: {
-        data: { nombre, rol: 'cliente' }
+        data: { 
+          nombre, 
+          rol: 'cliente',
+          fecha_nacimiento: fecha_nacimiento,
+          tipo_sangre: tipo_sangre,
+          color_ojos: color_ojos,
+          vacaciones_anuales: vacaciones_anuales
+        }
       }
     });
+    
     if (error) throw error;
+    
+    // Si el usuario se creó correctamente en auth, guardamos sus datos en la tabla 'usuarios' (pública)
+    if (data.user) {
+      const { error: insertError } = await this.supabaseService.client
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          nombre: nombre,
+          role: 'cliente',
+          fecha_nacimiento: fecha_nacimiento,
+          tipo_sangre: tipo_sangre,
+          color_ojos: color_ojos,
+          vacaciones_anuales: vacaciones_anuales
+        });
+        
+      if (insertError) {
+        console.error('Error insertando usuario en la tabla pública:', insertError);
+        // Podrías lanzar el error o manejarlo según tu lógica
+      }
+    }
+    
     return data;
   }
 

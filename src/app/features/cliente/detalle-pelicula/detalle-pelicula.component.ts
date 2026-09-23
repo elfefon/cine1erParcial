@@ -20,7 +20,7 @@ export class DetallePeliculaComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       const data = await this.supabase.client
-        .from('peliculas')
+        .from('movies')
         .select('*')
         .eq('id', id)
         .single();

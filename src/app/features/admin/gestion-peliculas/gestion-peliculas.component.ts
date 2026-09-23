@@ -28,14 +28,15 @@ export class GestionPeliculasComponent implements OnInit {
   }
 
   async cargarPeliculas() {
-    const data = await this.supabase.getTableData<Pelicula>('peliculas');
+    const data = await this.supabase.getTableData<Pelicula>('movies');
     this.peliculas.set(data);
   }
 
   async onSubmit() {
     if (this.peliculaForm.valid) {
       const pelicula = this.peliculaForm.getRawValue();
-      await this.supabase.insertData('peliculas', pelicula);
+      // 1. Guardar en tabla
+      await this.supabase.insertData('movies', pelicula);
       this.peliculaForm.reset({ activa: true });
       await this.cargarPeliculas();
       await this.registrarAccion('CREATE_MOVIE');
@@ -45,8 +46,10 @@ export class GestionPeliculasComponent implements OnInit {
   private async registrarAccion(tipo: string) {
     const user = await this.supabase.auth.getUser();
     if (user.data.user) {
-      await this.supabase.insertData('historial_acciones', {
+      // 2. Registrar en historial
+      await this.supabase.insertData('activity_logs', {
         tipo,
+        entidad: 'Pelicula',
         administrador: user.data.user.email,
         fecha: new Date().toISOString()
       });

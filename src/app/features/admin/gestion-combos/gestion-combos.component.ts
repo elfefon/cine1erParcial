@@ -27,14 +27,14 @@ export class GestionCombosComponent implements OnInit {
   }
 
   async cargarCombos() {
-    const data = await this.supabase.getTableData<Combo>('combos');
+    const data = await this.supabase.getTableData<Combo>('candy_products');
     this.combos.set(data);
   }
 
   async onSubmit() {
     if (this.comboForm.valid) {
       const combo = this.comboForm.getRawValue();
-      await this.supabase.insertData('combos', combo);
+      await this.supabase.insertData('candy_products', combo);
       this.comboForm.reset({ precio: 0 });
       await this.cargarCombos();
       await this.registrarAccion('CREATE_COMBO');
@@ -44,7 +44,7 @@ export class GestionCombosComponent implements OnInit {
   private async registrarAccion(tipo: string) {
     const user = await this.supabase.auth.getUser();
     if (user.data.user) {
-      await this.supabase.insertData('historial_acciones', {
+      await this.supabase.insertData('activity_logs', {
         tipo,
         administrador: user.data.user.email,
         fecha: new Date().toISOString()
