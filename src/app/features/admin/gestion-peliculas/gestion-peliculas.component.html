@@ -11,12 +11,12 @@
       <div class="form-grid">
         <div class="form-group">
           <label for="titulo">Título de la película</label>
-          <input id="titulo" type="text" placeholder="Ej. Avatar" formControlName="titulo">
+          <input id="titulo" type="text" placeholder="Ej. Avatar" formControlName="nombre">
         </div>
 
         <div class="form-group">
           <label for="poster_url">URL del Póster</label>
-          <input id="poster_url" type="text" placeholder="https://..." formControlName="poster_url">
+          <input id="poster_url" type="text" placeholder="https://..." formControlName="imagen_url">
         </div>
 
         <div class="form-group full-width">
@@ -48,7 +48,7 @@
       <tbody>
         @for (p of peliculas(); track p.id) {
           <tr>
-            <td style="font-weight: 700;">{{ p.titulo }}</td>
+            <td style="font-weight: 700;">{{ p.nombre }}</td>
             <td style="color: var(--text-muted); max-width: 400px;">{{ p.sinopsis }}</td>
             <td>
               <span class="status-badge" [class.activa]="p.activa" [class.inactiva]="!p.activa">

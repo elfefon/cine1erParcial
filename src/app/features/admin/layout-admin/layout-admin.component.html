@@ -7,8 +7,21 @@
       </div>
     </div>
 
+    <div class="user-profile" style="display: flex; align-items: center; padding: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; gap: 10px;">
+      <span style="font-size: 24px;">👤</span>
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-weight: bold;">Usuario</span>
+        <span class="admin-badge" style="font-size: 12px; padding: 2px 6px; border-radius: 4px; background: #ff4757; color: white;">Admin</span>
+      </div>
+    </div>
+
     <nav>
       <ul>
+        <li>
+          <a routerLink="home" routerLinkActive="active">
+            <span>🏠</span> Home
+          </a>
+        </li>
         <li>
           <a routerLink="peliculas" routerLinkActive="active">
             <span>📹</span> Películas
@@ -16,12 +29,17 @@
         </li>
         <li>
           <a routerLink="combos" routerLinkActive="active">
-            <span>🍿</span> Combos
+            <span>🍿</span> Candy (Combos)
           </a>
         </li>
         <li>
           <a routerLink="historial" routerLinkActive="active">
             <span>📋</span> Historial
+          </a>
+        </li>
+        <li>
+          <a routerLink="cupones" routerLinkActive="active">
+            <span>🎟️</span> Cupones
           </a>
         </li>
       </ul>

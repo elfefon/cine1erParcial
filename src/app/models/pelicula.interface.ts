@@ -1,7 +1,7 @@
 export interface Pelicula {
   id?: string;
-  titulo: string;
+  nombre: string;
   sinopsis: string;
-  poster_url: string;
-  activa: boolean;
+  imagen_url: string;
+  activa?: boolean;
 }

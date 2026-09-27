@@ -9,13 +9,13 @@
       @for (p of peliculas(); track p.id) {
         <div class="movie-card">
           <div class="poster-wrapper">
-            <img [src]="p.poster_url" [alt]="'Póster de ' + p.titulo" class="poster-img">
+            <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre" class="poster-img">
             <div class="poster-overlay"></div>
             <span class="badge-tag">En Cartelera</span>
           </div>
           
           <div class="card-body">
-            <h3 class="card-title">{{ p.titulo }}</h3>
+            <h3 class="card-title">{{ p.nombre }}</h3>
             <p class="card-sinopsis">{{ p.sinopsis | slice:0:110 }}...</p>
             <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
           </div>

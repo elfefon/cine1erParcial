@@ -1,7 +1,7 @@
 <div class="reserva-container">
   @if (pelicula(); as p) {
     <div class="reserva-header">
-      <h2>Reservar Entradas para {{ p.titulo }}</h2>
+      <h2>Reservar Entradas para {{ p.nombre }}</h2>
       <p>Seleccioná tus butacas en la sala y agregá los combos que desees</p>
     </div>
   }
@@ -32,7 +32,7 @@
             [disabled]="b.estado === 'ocupada'"
             (click)="toggleButaca(b)"
           >
-            {{ b.id }}
+            {{ b.numero_butaca }}
           </button>
         }
       </div>

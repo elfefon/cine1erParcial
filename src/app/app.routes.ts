@@ -13,6 +13,9 @@ import { CarteleraComponent } from './features/cliente/cartelera/cartelera.compo
 import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
 import { ReservaButacasComponent } from './features/cliente/reserva-butacas/reserva-butacas.component';
 
+import { HomeComponent } from './features/admin/home/home.component';
+import { CuponesComponent } from './features/admin/cupones/cupones.component';
+
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
@@ -22,10 +25,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canMatch: [adminGuard],
     children: [
-      { path: '', redirectTo: 'peliculas', pathMatch: 'full' },
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'home', component: HomeComponent },
       { path: 'peliculas', component: GestionPeliculasComponent },
       { path: 'combos', component: GestionCombosComponent },
-      { path: 'historial', component: HistorialAccionesComponent }
+      { path: 'historial', component: HistorialAccionesComponent },
+      { path: 'cupones', component: CuponesComponent }
     ]
   },
   {

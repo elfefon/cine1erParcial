@@ -17,9 +17,9 @@ export class GestionPeliculasComponent implements OnInit {
   peliculas = signal<Pelicula[]>([]);
   
   peliculaForm = this.fb.nonNullable.group({
-    titulo: ['', Validators.required],
+    nombre: ['', Validators.required],
     sinopsis: ['', Validators.required],
-    poster_url: ['', Validators.required],
+    imagen_url: ['', Validators.required],
     activa: [true]
   });
 
