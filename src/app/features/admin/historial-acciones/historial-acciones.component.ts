@@ -20,7 +20,13 @@ export class HistorialAccionesComponent implements OnInit {
   }
 
   async cargarDatos() {
-    const data = await this.supabase.getTableData<Accion>('activity_logs');
-    this.historial.set(data);
+    const { data, error } = await this.supabase.client
+      .from('activity_logs')
+      .select('*, profiles(email, nombre)')
+      .order('fecha_hora', { ascending: false });
+    
+    if (!error && data) {
+      this.historial.set(data as any[]);
+    }
   }
 }

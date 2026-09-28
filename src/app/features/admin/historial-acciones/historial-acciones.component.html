@@ -16,11 +16,11 @@
       <tbody>
         @for (accion of historial(); track accion.id) {
           <tr>
-            <td class="date-text">📅 {{ accion.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="admin-text">👤 {{ accion.administrador | titlecase }}</td>
+            <td class="date-text">📅 {{ accion.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="admin-text">👤 {{ (accion.profiles?.nombre || accion.profiles?.email || 'Desconocido') | titlecase }}</td>
             <td>
               <span class="action-badge">
-                ⚡ {{ accion.tipo | traducirAccion }}
+                ⚡ {{ accion.accion | traducirAccion }}
               </span>
             </td>
           </tr>

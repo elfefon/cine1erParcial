@@ -172,12 +172,12 @@
               <tr>
                 <td style="font-weight: 700;">{{ f.movies?.nombre }}</td>
                 <td>{{ f.movies?.duracion || 'N/A' }} min</td>
-                <td>{{ f.horario | date:'short' }}</td>
+                <td>{{ f.fecha_hora | date:'short' }}</td>
                 <td>{{ f.rooms?.nombre }}</td>
                 <td>{{ f.idioma }}</td>
                 <td>{{ f.rooms?.dimension }}</td>
                 <td>
-                  <button class="btn-modificar">Modificar</button>
+                  <button class="btn-modificar" (click)="abrirModificarFuncion(f)">Modificar</button>
                 </td>
               </tr>
             } @empty {
@@ -227,3 +227,13 @@
 
   </div>
 </div>
+
+@if (funcionSeleccionadaParaModificar()) {
+  <app-modificar-funcion
+    [funcion]="funcionSeleccionadaParaModificar()"
+    [peliculas]="peliculas()"
+    [salas]="salas()"
+    (close)="cerrarModificarFuncion()"
+    (saved)="onFuncionModificada()"
+  ></app-modificar-funcion>
+}

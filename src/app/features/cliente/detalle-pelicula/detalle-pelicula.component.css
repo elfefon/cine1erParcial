@@ -135,6 +135,58 @@
   font-size: 1.2rem;
 }
 
+.funciones-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.funcion-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.funcion-card:hover {
+  background: rgba(229, 9, 20, 0.1);
+  border-color: rgba(229, 9, 20, 0.4);
+  transform: translateY(-2px);
+}
+
+.f-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.f-time {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 5px;
+}
+
+.f-room {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.no-funciones {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  padding: 15px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(248, 113, 113, 0.3);
+  font-weight: 500;
+}
+
 @media (max-width: 868px) {
   .movie-detail-card {
     grid-template-columns: 1fr;

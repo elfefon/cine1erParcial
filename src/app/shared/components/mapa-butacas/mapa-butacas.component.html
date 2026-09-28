@@ -1,0 +1,56 @@
+<div class="mapa-container">
+  <!-- Pantalla curva de cine moderna -->
+  <div class="escenario-wrapper">
+    <div class="pantalla-arco"></div>
+    <div class="pantalla-luz"></div>
+    <span class="pantalla-texto">PANTALLA</span>
+  </div>
+
+  <!-- Contenedor con scroll horizontal suave para pantallas móviles -->
+  <div class="grid-wrapper">
+    <div class="sala-grid">
+      @for (b of butacas; track b.id) {
+        <button
+          type="button"
+          class="butaca-btn"
+          [class.ocupada]="b.ocupada"
+          [class.seleccionada]="isSeleccionada(b.id)"
+          [class.vip]="!b.ocupada && !isSeleccionada(b.id) && determinarCategoria(b) === 'vip'"
+          [class.discapacitado]="!b.ocupada && !isSeleccionada(b.id) && determinarCategoria(b) === 'discapacitado'"
+          [class.general]="!b.ocupada && !isSeleccionada(b.id) && determinarCategoria(b) === 'general'"
+          [disabled]="b.ocupada"
+          [style.grid-column]="b.columna"
+          [style.grid-row]="obtenerFila(b.fila)"
+          (click)="onButacaClick(b)"
+          [title]="b.numero_butaca + ' - Fila ' + b.fila + ' Col ' + b.columna + (b.ocupada ? ' (Ocupada)' : ' (' + determinarCategoria(b) + ')')"
+        >
+          <span class="numero-label">{{ b.numero_butaca }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Leyenda informativa -->
+  <div class="leyenda-container">
+    <div class="leyenda-item">
+      <span class="muestra-butaca muestra-general"></span>
+      <span class="leyenda-texto">General</span>
+    </div>
+    <div class="leyenda-item">
+      <span class="muestra-butaca muestra-discapacitados"></span>
+      <span class="leyenda-texto">Discapacitados (Fila J)</span>
+    </div>
+    <div class="leyenda-item">
+      <span class="muestra-butaca muestra-vip"></span>
+      <span class="leyenda-texto">VIP (Filas R, S, T)</span>
+    </div>
+    <div class="leyenda-item">
+      <span class="muestra-butaca muestra-ocupada"></span>
+      <span class="leyenda-texto">Ocupada</span>
+    </div>
+    <div class="leyenda-item">
+      <span class="muestra-butaca muestra-seleccionada"></span>
+      <span class="leyenda-texto">Tu Selección</span>
+    </div>
+  </div>
+</div>

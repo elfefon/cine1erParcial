@@ -1,34 +1,46 @@
 @if (pelicula(); as p) {
-  <div class="detalle-container">
-    <a routerLink="/cartelera" class="back-link">
-      <span>← Volver a Cartelera</span>
-    </a>
+<div class="detalle-container">
+  <a routerLink="/cartelera" class="back-link">
+    <span>← Volver a Cartelera</span>
+  </a>
 
-    <div class="movie-detail-card">
-      <div class="poster-box">
-        <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre">
+  <div class="movie-detail-card">
+    <div class="poster-box">
+      <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre">
+    </div>
+
+    <div class="info-box">
+      <h1 class="movie-title">{{ p.nombre }}</h1>
+
+      <div class="movie-tags">
+        <span class="tag tag-highlight">En Cartelera</span>
+        <span class="tag">HD 4K</span>
+        <span class="tag">Sonido Atmos</span>
       </div>
 
-      <div class="info-box">
-        <h1 class="movie-title">{{ p.nombre }}</h1>
+      <div class="section-title">Sinopsis</div>
+      <p class="sinopsis">{{ p.sinopsis }}</p>
 
-        <div class="movie-tags">
-          <span class="tag tag-highlight">En Cartelera</span>
-          <span class="tag">HD 4K</span>
-          <span class="tag">Sonido Atmos</span>
-        </div>
+      <div class="section-title" style="margin-top: 25px;">Funciones Disponibles</div>
 
-        <div class="section-title">Sinopsis</div>
-        <p class="sinopsis">{{ p.sinopsis }}</p>
-
-        <a [routerLink]="['/reserva', p.id]" class="btn-buy">
-          <span>🎟️</span> Comprar Entradas
+      @if (funciones().length > 0) {
+      <div class="funciones-grid">
+        @for (f of funciones(); track f.id) {
+        <a [routerLink]="['/reserva', p.id]" [queryParams]="{ showtime: f.id }" class="funcion-card">
+          <div class="f-date">📅 {{ f.fecha_hora | date:'dd/MMM' }}</div>
+          <div class="f-time">⏰ {{ f.fecha_hora | date:'HH:mm' }}</div>
+          <div class="f-room">📍 {{ f.rooms?.nombre }} | {{ f.idioma }} | {{ f.formato }}</div>
         </a>
+        }
       </div>
+      } @else {
+      <p class="no-funciones">No hay funciones asignadas para esta película en este momento.</p>
+      }
     </div>
   </div>
+</div>
 } @else {
-  <div class="loading-box">
-    <p>🍿 Cargando detalles de la película...</p>
-  </div>
+<div class="loading-box">
+  <p>🍿 Cargando detalles de la película...</p>
+</div>
 }

@@ -3,17 +3,20 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { Pelicula } from '../../../models/pelicula.interface';
+import { ModificarFuncion } from '../home/modificar-funcion/modificar-funcion';
 
 @Component({
   selector: 'app-gestion-peliculas',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, ModificarFuncion],
   templateUrl: './gestion-peliculas.component.html',
   styleUrl: './gestion-peliculas.component.css'
 })
 export class GestionPeliculasComponent implements OnInit {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
+
+  funcionSeleccionadaParaModificar = signal<any>(null);
 
   vistaActual = signal<'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas'>('menu');
 
@@ -65,7 +68,7 @@ export class GestionPeliculasComponent implements OnInit {
   async cargarFunciones() {
     const { data, error } = await this.supabase.client
       .from('showtimes')
-      .select(`*, movies (nombre, duracion), rooms (nombre, dimension)`);
+      .select(`*, movies (*), rooms (*)`);
     if (!error) {
       this.funciones.set(data || []);
     }
@@ -104,12 +107,37 @@ export class GestionPeliculasComponent implements OnInit {
   async onSubmitFuncion() {
     if (this.funcionForm.valid) {
       const formValue = this.funcionForm.getRawValue();
+
+      // Validación de choque de horarios
+      const peliculaSeleccionada = this.peliculas().find(p => p.id === formValue.pelicula_id);
+      const duracionNuevo = peliculaSeleccionada?.duracion_min || 120; // 120 min fallback
+      const inicioNuevo = new Date(formValue.horario).getTime();
+      const finNuevo = inicioNuevo + (duracionNuevo * 60000); // ms
+
+      const funcionesEnMismaSala = this.funciones().filter(f => f.room_id === formValue.sala_id);
+
+      for (const fExistente of funcionesEnMismaSala) {
+        const duracionExistente = fExistente.movies?.duracion_min || 120;
+        const inicioExistente = new Date(fExistente.fecha_hora).getTime();
+        const finExistente = inicioExistente + (duracionExistente * 60000);
+
+        // Se requiere 30 minutos (1800000 ms) de brecha entre funciones
+        const nuevoEmpiezaAntesQueTermineExistente = inicioNuevo < (finExistente + 1800000);
+        const existenteEmpiezaAntesQueTermineNuevo = inicioExistente < (finNuevo + 1800000);
+
+        if (nuevoEmpiezaAntesQueTermineExistente && existenteEmpiezaAntesQueTermineNuevo) {
+          alert('Error: No se puede crear la función. Choca con una existente o no respeta los 30 minutos de descanso en esta sala.');
+          return;
+        }
+      }
+
       const funcionData = {
         movie_id: formValue.pelicula_id,
         room_id: formValue.sala_id,
-        horario: formValue.horario,
+        fecha_hora: formValue.horario,
         idioma: formValue.idioma,
-        precio: formValue.precio
+        precio_base: formValue.precio,
+        formato: formValue.formato
       };
       await this.supabase.insertData('showtimes', funcionData);
       this.funcionForm.reset();
@@ -123,11 +151,24 @@ export class GestionPeliculasComponent implements OnInit {
     const user = await this.supabase.auth.getUser();
     if (user.data.user) {
       await this.supabase.insertData('activity_logs', {
-        tipo,
-        entidad: 'Pelicula',
-        administrador: user.data.user.email,
-        fecha: new Date().toISOString()
+        accion: tipo,
+        entidad_afectada: 'Pelicula',
+        user_id: user.data.user.id
       });
     }
+  }
+
+  abrirModificarFuncion(f: any) {
+    this.funcionSeleccionadaParaModificar.set(f);
+  }
+
+  cerrarModificarFuncion() {
+    this.funcionSeleccionadaParaModificar.set(null);
+  }
+
+  async onFuncionModificada() {
+    this.cerrarModificarFuncion();
+    await this.cargarFunciones();
+    await this.registrarAccion('UPDATE_SHOWTIME');
   }
 }

@@ -4,4 +4,8 @@ export interface Pelicula {
   sinopsis: string;
   imagen_url: string;
   activa?: boolean;
+  duracion_min?: number;
+  restriccion_edad?: number;
+  generos?: string[];
+  fecha_estreno?: string;
 }

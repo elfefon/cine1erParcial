@@ -1,60 +1,201 @@
 <div class="page-container">
-  <div class="page-header">
-    <h2>Gestión de Combos</h2>
-    <p>Agregá combos de pochoclos y golosinas para los clientes del cine</p>
+  <div class="page-header" *ngIf="vistaActual() !== 'menu'">
+    <button class="btn-back" (click)="cambiarVista('menu')">← Volver al menú principal</button>
   </div>
 
-  <div class="form-card">
-    <h3>Nuevo Combo</h3>
-
-    <form [formGroup]="comboForm" (ngSubmit)="onSubmit()">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="nombre">Nombre del Combo</label>
-          <input id="nombre" type="text" placeholder="Ej. Combo Balde XL" formControlName="nombre">
-        </div>
-
-        <div class="form-group">
-          <label for="precio">Precio ($)</label>
-          <input id="precio" type="number" min="0" placeholder="0" formControlName="precio">
-        </div>
-
-        <div class="form-group full-width">
-          <label for="descripcion">Descripción</label>
-          <textarea id="descripcion" rows="3" placeholder="Detalle del contenido del combo..." formControlName="descripcion"></textarea>
-        </div>
+  <div [ngSwitch]="vistaActual()">
+    
+    <!-- MENU PRINCIPAL -->
+    <div *ngSwitchCase="'menu'" class="menu-hub">
+      <div class="page-header text-center">
+        <h2>Gestión Candy</h2>
+        <p>¿Qué quieres hacer?</p>
       </div>
 
-      <button type="submit" class="btn-save" [disabled]="comboForm.invalid">💾 Guardar Combo</button>
-    </form>
-  </div>
+      <div class="hub-grid">
+        <div class="hub-card">
+          <h3>Productos</h3>
+          <div class="hub-buttons">
+            <button (click)="cambiarVista('crear-producto')">Crear</button>
+            <button (click)="cambiarVista('modificar-producto')">Modificar</button>
+            <button (click)="cambiarVista('ver-productos')">Ver</button>
+          </div>
+        </div>
+        <div class="hub-card">
+          <h3>Combos</h3>
+          <div class="hub-buttons">
+            <button (click)="cambiarVista('crear-combo')">Crear</button>
+            <button (click)="cambiarVista('modificar-combo')">Modificar</button>
+            <button (click)="cambiarVista('ver-combos')">Ver</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="table-card">
-    <h3>Combos Disponibles</h3>
-    
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Precio</th>
-          <th>Descripción</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of combos(); track c.id) {
-          <tr>
-            <td style="font-weight: 700;">🍿 {{ c.nombre }}</td>
-            <td><span class="price-tag">${{ c.precio }}</span></td>
-            <td style="color: var(--text-muted);">{{ c.descripcion }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
-              No hay combos registrados aún.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <!-- CREAR COMBO (EXISTENTE) -->
+    <div *ngSwitchCase="'crear-combo'">
+      <div class="page-header">
+        <h2>Gestión de Combos</h2>
+        <p>Agregá combos de pochoclos y golosinas para los clientes del cine</p>
+      </div>
+
+      <div class="form-card">
+        <h3>Nuevo Combo</h3>
+        <form [formGroup]="comboForm" (ngSubmit)="onSubmit()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="nombre">Nombre del Combo</label>
+              <input id="nombre" type="text" placeholder="Ej. Combo Balde XL" formControlName="nombre">
+            </div>
+
+            <div class="form-group">
+              <label for="precio">Precio ($)</label>
+              <input id="precio" type="number" min="0" placeholder="0" formControlName="precio">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="descripcion">Descripción</label>
+              <textarea id="descripcion" rows="3" placeholder="Detalle del contenido del combo..." formControlName="descripcion"></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn-save" [disabled]="comboForm.invalid">💾 Guardar Combo</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VER COMBOS (EXISTENTE) -->
+    <div *ngSwitchCase="'ver-combos'">
+      <div class="table-card">
+        <h3>Combos Disponibles</h3>
+        <input type="text" class="search-bar" placeholder="Buscar combo..." (input)="onBuscar($event)">
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Precio</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of combosFiltrados; track c.id) {
+              <tr>
+                <td style="font-weight: 700;">🍿 {{ c.nombre }}</td>
+                <td><span class="price-tag">${{ c.precio }}</span></td>
+                <td style="color: var(--text-muted);">{{ c.descripcion }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  No hay combos registrados aún.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODIFICAR COMBO -->
+    <div *ngSwitchCase="'modificar-combo'">
+      <div class="table-card">
+        <h3>Modificar Combos</h3>
+        <input type="text" class="search-bar" placeholder="Buscar combo..." (input)="onBuscar($event)">
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Precio</th>
+              <th>Descripción</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of combosFiltrados; track c.id) {
+              <tr>
+                <td style="font-weight: 700;">🍿 {{ c.nombre }}</td>
+                <td><span class="price-tag">${{ c.precio }}</span></td>
+                <td style="color: var(--text-muted);">{{ c.descripcion }}</td>
+                <td><button class="btn-modificar">Modificar</button></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  No hay combos registrados para modificar.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CREAR PRODUCTO -->
+    <div *ngSwitchCase="'crear-producto'">
+      <div class="form-card">
+        <h3>Nuevo Producto</h3>
+        <form [formGroup]="productoForm" (ngSubmit)="onSubmitProducto()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="prod_nombre">Nombre del Producto</label>
+              <input id="prod_nombre" type="text" placeholder="Ej. Gaseosa Grande" formControlName="nombre">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="prod_precio">Precio ($)</label>
+              <input id="prod_precio" type="number" min="0" placeholder="0" formControlName="precio">
+            </div>
+          </div>
+          <button type="submit" class="btn-save" [disabled]="productoForm.invalid">💾 Guardar Producto</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VER PRODUCTOS -->
+    <div *ngSwitchCase="'ver-productos'">
+      <div class="table-card">
+        <h3>Productos Disponibles</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="2" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                No hay productos registrados aún.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODIFICAR PRODUCTO -->
+    <div *ngSwitchCase="'modificar-producto'">
+      <div class="table-card">
+        <h3>Modificar Productos</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Precio</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                No hay productos para modificar.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>

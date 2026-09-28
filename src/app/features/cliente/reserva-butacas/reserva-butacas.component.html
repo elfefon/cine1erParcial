@@ -11,32 +11,17 @@
       🎉 {{ mensajeExito() }}
     </div>
   } @else {
-    <div class="sala-card">
-      <div class="pantalla-container">
-        <div class="pantalla">Pantalla principal</div>
+    @if (butacas().length === 0) {
+      <div class="sala-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
+        ⚠️ No hay butacas registradas o accesibles para esta sala en la base de datos.
       </div>
-
-      <div class="legend">
-        <div class="legend-item"><span class="sample-dot libre"></span> Libre</div>
-        <div class="legend-item"><span class="sample-dot seleccionada"></span> Seleccionada</div>
-        <div class="legend-item"><span class="sample-dot ocupada"></span> Ocupada</div>
-      </div>
-
-      <div class="grid-butacas">
-        @for (b of butacas(); track b.id) {
-          <button 
-            class="butaca"
-            [class.libre]="b.estado === 'libre'"
-            [class.seleccionada]="b.estado === 'seleccionada'"
-            [class.ocupada]="b.estado === 'ocupada'"
-            [disabled]="b.estado === 'ocupada'"
-            (click)="toggleButaca(b)"
-          >
-            {{ b.numero_butaca }}
-          </button>
-        }
-      </div>
-    </div>
+    } @else {
+      <app-mapa-butacas 
+        [butacas]="butacasParaMapa()"
+        [butacasSeleccionadasIds]="butacasSeleccionadasIds()"
+        (seleccionarButaca)="toggleButaca($event)"
+      ></app-mapa-butacas>
+    }
 
     <div class="combos-section">
       <h3>🥤 Combos Disponibles</h3>
