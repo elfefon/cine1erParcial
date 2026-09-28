@@ -1,0 +1,25 @@
+<div class="dash-card">
+  <div class="card-header">
+    <div class="title-container">
+      <h3>Candy más consumido</h3>
+      <span class="badge-filter">{{ filtroActual }}</span>
+    </div>
+    <div class="dropdown">
+      <button class="btn-dots">⋮</button>
+      <div class="dropdown-menu">
+        <span class="dropdown-subtitle">Filtro de tiempo</span>
+        <button (click)="cargarGraficoCandy('dia')">Día</button>
+        <button (click)="cargarGraficoCandy('semana')">Semana</button>
+        <button (click)="cargarGraficoCandy('mes')">Mes</button>
+        <button (click)="cargarGraficoCandy('año')">Año</button>
+        <hr class="dropdown-divider">
+        <span class="dropdown-subtitle">Exportar</span>
+        <button (click)="exportar('pdf')">PDF</button>
+        <button (click)="exportar('excel')">Excel</button>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <canvas id="topCandyChart"></canvas>
+  </div>
+</div>

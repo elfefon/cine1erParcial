@@ -107,7 +107,6 @@
   flex: 1;
   margin-left: 260px;
   padding: 40px;
-  max-width: 1200px;
 }
 
 @media (max-width: 768px) {
