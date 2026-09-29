@@ -246,6 +246,17 @@ export class ReservaButacasComponent implements OnInit {
       const resReservas = await this.supabase.client.from('seat_reservations').insert(reservasPayload);
       if (resReservas.error) throw resReservas.error;
 
+      // 3. Actualizamos ventas_totales en la película (cantidad de butacas vendidas)
+      const peliculaData = this.pelicula();
+      if (peliculaData && peliculaData.id) {
+        const ventasActuales = peliculaData.ventas_totales || 0;
+        const nuevasVentas = ventasActuales + seleccionadas.length;
+        const resVentas = await this.supabase.client.from('movies').update({ ventas_totales: nuevasVentas }).eq('id', peliculaData.id);
+        if (resVentas.error) {
+          console.error('Error al actualizar ventas_totales de la pelicula:', resVentas.error);
+        }
+      }
+
       this.mensajeExito.set('¡Reserva confirmada con éxito!');
       
       setTimeout(() => {

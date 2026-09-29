@@ -8,4 +8,5 @@ export interface Pelicula {
   restriccion_edad?: number;
   generos?: string[];
   fecha_estreno?: string;
+  ventas_totales?: number;
 }
