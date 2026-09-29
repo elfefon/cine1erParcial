@@ -5,6 +5,30 @@
   </div>
 
   @if (peliculas().length > 0) {
+    <!-- SECCIÓN TOP 10 RANKING -->
+    <div class="ranking-section">
+      <h3 class="ranking-title">🏆 Ranking Más Vistas</h3>
+      <div class="movies-grid ranking-grid">
+        @for (p of topPeliculas(); track p.id; let i = $index) {
+          <div class="movie-card ranking-card">
+            <div class="poster-wrapper">
+              <div class="ranking-badge">{{ i + 1 }}</div>
+              <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre" class="poster-img">
+              <div class="poster-overlay"></div>
+            </div>
+            
+            <div class="card-body">
+              <h3 class="card-title">{{ p.nombre }}</h3>
+              <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+
+    <h3 class="section-subtitle">Todas las Películas</h3>
     <div class="movies-grid">
       @for (p of peliculas(); track p.id) {
         <div class="movie-card">
