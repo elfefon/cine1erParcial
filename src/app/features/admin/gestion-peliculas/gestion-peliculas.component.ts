@@ -30,6 +30,10 @@ export class GestionPeliculasComponent implements OnInit {
     nombre: ['', Validators.required],
     sinopsis: ['', Validators.required],
     imagen_url: ['', Validators.required],
+    duracion_min: [0, [Validators.required, Validators.min(1)]],
+    restriccion_edad: [0, [Validators.required, Validators.min(0)]],
+    generos: ['', Validators.required],
+    fecha_estreno: [''],
     activa: [true]
   });
 
@@ -95,9 +99,22 @@ export class GestionPeliculasComponent implements OnInit {
 
   async onSubmit() {
     if (this.peliculaForm.valid) {
-      const pelicula = this.peliculaForm.getRawValue();
+      const rawValues = this.peliculaForm.getRawValue();
+      const generosArray = rawValues.generos.split(',').map(g => g.trim()).filter(g => g !== '');
+
+      const pelicula = {
+        nombre: rawValues.nombre,
+        sinopsis: rawValues.sinopsis,
+        imagen_url: rawValues.imagen_url,
+        duracion_min: rawValues.duracion_min,
+        restriccion_edad: rawValues.restriccion_edad,
+        generos: generosArray,
+        fecha_estreno: rawValues.fecha_estreno ? rawValues.fecha_estreno : null,
+        activa: rawValues.activa
+      };
+
       await this.supabase.insertData('movies', pelicula);
-      this.peliculaForm.reset({ activa: true });
+      this.peliculaForm.reset({ activa: true, duracion_min: 0, restriccion_edad: 0, generos: '', fecha_estreno: '' });
       await this.cargarPeliculas();
       await this.registrarAccion('CREATE_MOVIE');
       this.cambiarVista('menu');

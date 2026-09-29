@@ -54,6 +54,23 @@
               <label for="sinopsis">Sinopsis</label>
               <textarea id="sinopsis" rows="3" placeholder="Resumen de la trama de la película..." formControlName="sinopsis"></textarea>
             </div>
+            <div class="form-group">
+              <label for="duracion_min">Duración (Minutos)</label>
+              <input id="duracion_min" type="number" placeholder="Ej. 120" formControlName="duracion_min">
+            </div>
+            <div class="form-group">
+              <label for="restriccion_edad">Restricción de Edad (+)</label>
+              <input id="restriccion_edad" type="number" placeholder="Ej. 13, 16 (0 = ATP)" formControlName="restriccion_edad">
+            </div>
+            <div class="form-group">
+              <label for="generos">Géneros</label>
+              <input id="generos" type="text" placeholder="Ej. Acción, Ciencia Ficción" formControlName="generos">
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Separar con comas</small>
+            </div>
+            <div class="form-group">
+              <label for="fecha_estreno">Estreno (Opcional)</label>
+              <input id="fecha_estreno" type="date" formControlName="fecha_estreno">
+            </div>
             <div class="form-group full-width checkbox-group">
               <input id="activa" type="checkbox" formControlName="activa">
               <label for="activa">Película activa en cartelera</label>
