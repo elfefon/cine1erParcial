@@ -9,27 +9,27 @@
       <thead>
         <tr>
           <th>Fecha y Hora</th>
-          <th>Administrador</th>
+          <th>Usuario</th>
           <th>Acción Realizada</th>
         </tr>
       </thead>
       <tbody>
         @for (accion of historial(); track accion.id) {
-          <tr>
-            <td class="date-text">📅 {{ accion.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td class="admin-text">👤 {{ (accion.profiles?.nombre || accion.profiles?.email || 'Desconocido') | titlecase }}</td>
-            <td>
-              <span class="action-badge">
-                ⚡ {{ accion.accion | traducirAccion }}
-              </span>
-            </td>
-          </tr>
+        <tr>
+          <td class="date-text">📅 {{ (accion.created_at || accion.fecha_hora) | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="admin-text">👤 {{ (accion.profiles?.role || accion.profiles?.rol || 'Admin') | titlecase }}</td>
+          <td>
+            <span class="action-badge">
+              ⚡ {{ accion.accion | traducirAccion }}
+            </span>
+          </td>
+        </tr>
         } @empty {
-          <tr>
-            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
-              No hay acciones registradas en el historial.
-            </td>
-          </tr>
+        <tr>
+          <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 30px;">
+            No hay acciones registradas en el historial.
+          </td>
+        </tr>
         }
       </tbody>
     </table>

@@ -81,14 +81,14 @@ export class GestionCombosComponent implements OnInit {
 
   get combosFiltrados() {
     if (!this.filtroBusqueda()) return this.combos();
-    return this.combos().filter(c => 
+    return this.combos().filter(c =>
       c.nombre?.toLowerCase().includes(this.filtroBusqueda())
     );
   }
 
   get productosFiltrados() {
     if (!this.filtroBusqueda()) return this.productos();
-    return this.productos().filter(p => 
+    return this.productos().filter(p =>
       p.nombre?.toLowerCase().includes(this.filtroBusqueda()) ||
       p.categoria?.toLowerCase().includes(this.filtroBusqueda())
     );
@@ -211,7 +211,7 @@ export class GestionCombosComponent implements OnInit {
         costo_puntos: Math.floor(data.precio / 5),
         productos_incluidos: this.productosSeleccionadosEdit()
       }).eq('id', data.id);
-      
+
       this.cerrarModificarCombo();
       await this.cargarCombos();
       await this.registrarAccion('UPDATE_COMBO');
@@ -246,7 +246,7 @@ export class GestionCombosComponent implements OnInit {
         costo_puntos: Math.floor(data.precio / 5),
         imagen_url: data.imagen_url
       }).eq('id', data.id);
-      
+
       this.cerrarModificarProducto();
       await this.cargarCombos();
       await this.registrarAccion('UPDATE_CANDY_PRODUCT');

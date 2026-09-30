@@ -22,10 +22,15 @@ export class HistorialAccionesComponent implements OnInit {
   async cargarDatos() {
     const { data, error } = await this.supabase.client
       .from('activity_logs')
-      .select('*, profiles(email, nombre)')
+      .select('*, profiles(role, nombre)')
       .order('fecha_hora', { ascending: false });
     
-    if (!error && data) {
+    if (error) {
+      console.error('Error fetching activity logs:', error);
+      // Try fallback without profiles in case of relation error
+      const fallback = await this.supabase.client.from('activity_logs').select('*').order('fecha_hora', { ascending: false });
+      if (fallback.data) this.historial.set(fallback.data as any[]);
+    } else if (data) {
       this.historial.set(data as any[]);
     }
   }

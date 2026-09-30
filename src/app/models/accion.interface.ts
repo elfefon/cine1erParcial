@@ -3,9 +3,11 @@ export interface Accion {
   user_id: string;
   accion: string;
   entidad_afectada: string;
-  fecha_hora: string;
+  fecha_hora?: string;
+  created_at?: string;
   profiles?: {
-    email: string;
     nombre: string;
+    role?: string;
+    rol?: string;
   };
 }

@@ -23,7 +23,7 @@ export class GestionPeliculasComponent implements OnInit {
   peliculas = signal<Pelicula[]>([]);
   salas = signal<any[]>([]);
   funciones = signal<any[]>([]);
-  
+
   // Lista de recomendadas en proceso (para editar antes de guardar)
   recomendadasBorrador = signal<Pelicula[]>([]);
   peliculasDisponiblesParaRecomendar = computed(() => {
@@ -31,7 +31,7 @@ export class GestionPeliculasComponent implements OnInit {
   });
 
   filtroBusqueda = signal<string>('');
-  
+
   tmdbNombreInput = signal<string>('');
 
   async importarYRecomendar() {
@@ -43,32 +43,32 @@ export class GestionPeliculasComponent implements OnInit {
     try {
       const peliculaGuardada = await this.supabase.buscarEImportarPeliculaPorNombre(nombre);
       if (peliculaGuardada) {
-         // Marcarla como recomendada directamente en la base de datos
-         const { error } = await this.supabase.client.from('movies').update({ recomendada: true }).eq('id', peliculaGuardada.id);
-         if (error) {
-           console.error("Error BD:", error);
-           alert(`La película se importó, pero ocurrió un error al recomendarla en BD (¿Existe la columna 'recomendada'?): ${error.message}`);
-         }
-         
-         const pFinal = { ...peliculaGuardada, recomendada: true };
-         this.peliculas.update(lista => {
-           const existe = lista.find(x => x.id === pFinal.id);
-           return existe ? lista.map(x => x.id === pFinal.id ? pFinal : x) : [...lista, pFinal];
-         });
-         
-         this.recomendadasBorrador.update(lista => {
-           const existe = lista.find(x => x.id === pFinal.id);
-           return existe ? lista : [...lista, pFinal];
-         });
+        // Marcarla como recomendada directamente en la base de datos
+        const { error } = await this.supabase.client.from('movies').update({ recomendada: true }).eq('id', peliculaGuardada.id);
+        if (error) {
+          console.error("Error BD:", error);
+          alert(`La película se importó, pero ocurrió un error al recomendarla en BD (¿Existe la columna 'recomendada'?): ${error.message}`);
+        }
 
-         this.tmdbNombreInput.set('');
-         if (!error) {
-           alert(`Película "${peliculaGuardada.nombre}" importada y añadida a recomendaciones.`);
-         }
+        const pFinal = { ...peliculaGuardada, recomendada: true };
+        this.peliculas.update(lista => {
+          const existe = lista.find(x => x.id === pFinal.id);
+          return existe ? lista.map(x => x.id === pFinal.id ? pFinal : x) : [...lista, pFinal];
+        });
+
+        this.recomendadasBorrador.update(lista => {
+          const existe = lista.find(x => x.id === pFinal.id);
+          return existe ? lista : [...lista, pFinal];
+        });
+
+        this.tmdbNombreInput.set('');
+        if (!error) {
+          alert(`Película "${peliculaGuardada.nombre}" importada y añadida a recomendaciones.`);
+        }
       } else {
-         alert('No se pudo importar la película. Puede que ya exista o haya ocurrido un error.');
+        alert('No se pudo importar la película. Puede que ya exista o haya ocurrido un error.');
       }
-    } catch(e: any) {
+    } catch (e: any) {
       console.error(e);
       alert(e.message || 'Error importando la película.');
     }
@@ -91,14 +91,14 @@ export class GestionPeliculasComponent implements OnInit {
     sala_id: ['', Validators.required],
     idioma: ['', Validators.required],
     precio: [0, [Validators.required, Validators.min(0)]],
-    formato: [{value: '', disabled: true}]
+    formato: [{ value: '', disabled: true }]
   });
 
   async ngOnInit() {
     await this.cargarPeliculas();
     await this.cargarSalas();
     await this.cargarFunciones();
-    
+
     this.funcionForm.get('sala_id')?.valueChanges.subscribe(salaId => {
       const sala = this.salas().find(s => s.id === salaId);
       if (sala) {
@@ -141,7 +141,7 @@ export class GestionPeliculasComponent implements OnInit {
       console.error("Error BD:", error);
       alert(`Error al recomendar en BD (¿Falta columna 'recomendada'?): ${error.message}`);
     }
-    
+
     // Actualizar estado local
     this.recomendadasBorrador.update(lista => [...lista, { ...p, recomendada: true }]);
     this.peliculas.update(lista => lista.map(item => item.id === p.id ? { ...item, recomendada: true } : item));
@@ -154,7 +154,7 @@ export class GestionPeliculasComponent implements OnInit {
       console.error("Error BD:", error);
       alert(`Error al quitar recomendación en BD: ${error.message}`);
     }
-    
+
     // Actualizar estado local
     this.recomendadasBorrador.update(lista => lista.filter(item => item.id !== p.id));
     this.peliculas.update(lista => lista.map(item => item.id === p.id ? { ...item, recomendada: false } : item));
@@ -181,7 +181,7 @@ export class GestionPeliculasComponent implements OnInit {
     return this.funciones().filter(f => {
       const s = this.filtroBusqueda();
       return f.movies?.nombre?.toLowerCase().includes(s) ||
-             f.rooms?.nombre?.toLowerCase().includes(s);
+        f.rooms?.nombre?.toLowerCase().includes(s);
     });
   }
 
