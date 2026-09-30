@@ -1,0 +1,35 @@
+<div class="cartelera-container">
+  <div class="cartelera-header" style="text-align: center; margin-bottom: 40px;">
+    <h2>Próximos Estrenos 🚀</h2>
+    <p>¡Prepárate para lo que viene! Agendá estas fechas y sé el primero en tu butaca.</p>
+  </div>
+
+  @if (peliculasProximamente().length > 0) {
+    <div class="movies-grid">
+      @for (p of peliculasProximamente(); track p.id) {
+        <div class="movie-card" style="opacity: 0.9;">
+          <div class="poster-wrapper">
+            <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre" class="poster-img">
+            <div class="poster-overlay"></div>
+            <span class="badge-tag" style="background: #3b82f6;">Muy Pronto</span>
+          </div>
+          
+          <div class="card-body">
+            <h3 class="card-title">{{ p.nombre }}</h3>
+            <p class="card-sinopsis" style="color: #60a5fa; font-weight: 600; margin-bottom: 8px;">
+              Estreno: {{ p.fecha_estreno | date:'dd/MM/yyyy' }}
+            </p>
+            <p class="card-sinopsis">{{ p.sinopsis | slice:0:110 }}...</p>
+            <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <div class="icon">🎬</div>
+      <h3>Por el momento no hay próximos estrenos programados.</h3>
+      <p>Vuelve pronto para enterarte de las novedades.</p>
+    </div>
+  }
+</div>

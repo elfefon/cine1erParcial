@@ -16,6 +16,8 @@ import { ReservaButacasComponent } from './features/cliente/reserva-butacas/rese
 import { HomeComponent } from './features/admin/home/home.component';
 import { CuponesComponent } from './features/admin/cupones/cupones.component';
 
+import { ProximamenteComponent } from './features/cliente/proximamente/proximamente';
+
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
@@ -39,6 +41,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'cartelera', pathMatch: 'full' },
       { path: 'cartelera', component: CarteleraComponent },
+      { path: 'proximamente', component: ProximamenteComponent },
       { path: 'pelicula/:id', component: DetallePeliculaComponent },
       { path: 'reserva/:id', component: ReservaButacasComponent }
     ]

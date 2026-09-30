@@ -1,0 +1,3 @@
+import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+// ... too complex to set up node with env vars, let's just use grep on the Angular console or something...

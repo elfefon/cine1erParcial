@@ -27,6 +27,9 @@ export class CarteleraComponent implements OnInit {
 
   async ngOnInit() {
     const data = await this.supabase.getTableData<Pelicula>('movies');
-    this.peliculas.set(data.filter(p => p.activa !== false));
+    const hoy = new Date().toISOString().split('T')[0];
+    // Solo películas de cartelera (fechas <= hoy o vacías)
+    const peliculasFiltradas = data.filter(p => p.activa !== false && (!p.fecha_estreno || p.fecha_estreno <= hoy));
+    this.peliculas.set(peliculasFiltradas);
   }
 }
