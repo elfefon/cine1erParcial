@@ -223,7 +223,7 @@ export class ReservaButacasComponent implements OnInit {
       const payloadTicket = {
         user_id: usuario.id,
         total_pagado: this.total(),
-        puntos_generados: Math.floor(this.total() / 100),
+        puntos_generados: Math.floor(this.total() / 5),
         codigo_venta: codigoVenta,
         qr_codigo: qrData,
         estado: 'valido',
