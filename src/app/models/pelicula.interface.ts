@@ -9,4 +9,5 @@ export interface Pelicula {
   generos?: string[];
   fecha_estreno?: string;
   ventas_totales?: number;
+  recomendada?: boolean;
 }

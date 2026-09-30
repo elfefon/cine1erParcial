@@ -26,8 +26,58 @@
           <div class="hub-buttons">
             <button (click)="cambiarVista('crear-pelicula')">Crear</button>
             <button (click)="cambiarVista('ver-peliculas')">Ver</button>
+            <button (click)="cambiarVista('recomendaciones')">Recomendaciones</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- RECOMENDACIONES -->
+    <div *ngSwitchCase="'recomendaciones'">
+      <div class="page-header">
+        <h2>Gestión de Recomendadas</h2>
+        <p>Busca e importa películas para agregarlas automáticamente a tus recomendadas (máx 10).</p>
+      </div>
+
+      <div class="recomendaciones-container-new">
+        
+        <!-- Formulario de Importación TMDB -->
+        <div class="form-card" style="margin-bottom: 30px;">
+          <h3>Agregar a Recomendadas</h3>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <input 
+              type="text" 
+              class="search-bar" 
+              style="margin-bottom: 0; flex: 1;" 
+              placeholder="Nombre de la película en TMDB..." 
+              [value]="tmdbNombreInput()" 
+              (input)="tmdbNombreInput.set($any($event.target).value)"
+              (keydown.enter)="importarYRecomendar()"
+            >
+            <button class="btn-save" style="margin-top: 0;" (click)="importarYRecomendar()">Buscar e Importar</button>
+          </div>
+        </div>
+
+        <!-- Lista Horizontal (Swiper) -->
+        <div class="panel-recomendadas full-width-panel">
+          <div class="panel-header">
+            <h3>Películas Recomendadas ({{ recomendadasBorrador().length }}/10)</h3>
+          </div>
+          
+          <div class="swiper-preview large-swiper">
+            @for (p of recomendadasBorrador(); track p.id) {
+              <div class="preview-card-large">
+                <img [src]="p.imagen_url" [alt]="p.nombre" class="preview-img">
+                <button class="btn-remove large-remove" (click)="quitarDeRecomendadas(p)" title="Quitar">✖</button>
+              </div>
+            } @empty {
+              <div class="empty-list" style="width: 100%; text-align: center; color: var(--text-muted); padding: 40px;">
+                No hay películas recomendadas aún.
+              </div>
+            }
+          </div>
+        </div>
+
       </div>
     </div>
 

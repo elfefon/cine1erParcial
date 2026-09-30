@@ -69,8 +69,29 @@ export class SupabaseService {
     return 0; 
   }
 
-  // importación de peliculas
-  private async importarPelicula(tmdbId: number) {
+  // importación de peliculas por nombre
+  public async buscarEImportarPeliculaPorNombre(nombre: string) {
+    try {
+      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${environment.tmbd_key}&language=es-ES&query=${encodeURIComponent(nombre)}`;
+      const searchResponse = await fetch(searchUrl);
+      if (!searchResponse.ok) throw new Error(`Error de TMDB al buscar: ${searchResponse.status}`);
+      const searchData = await searchResponse.json();
+
+      if (!searchData.results || searchData.results.length === 0) {
+        throw new Error('No se encontraron películas con ese nombre en TMDB.');
+      }
+
+      // Tomamos la primera película de los resultados de búsqueda
+      const tmdbId = searchData.results[0].id;
+      return await this.importarPelicula(tmdbId);
+    } catch (error: any) {
+      console.error("Error buscando/importando la película:", error.message);
+      throw error;
+    }
+  }
+
+  // importación de peliculas por id
+  public async importarPelicula(tmdbId: number) {
   try {
     const url = `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${environment.tmbd_key}&language=es-ES&append_to_response=release_dates`;
     const response = await fetch(url);

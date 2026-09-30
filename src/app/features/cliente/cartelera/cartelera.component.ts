@@ -21,6 +21,10 @@ export class CarteleraComponent implements OnInit {
       .slice(0, 10);
   });
 
+  recomendadasPeliculas = computed(() => {
+    return this.peliculas().filter(p => p.recomendada);
+  });
+
   async ngOnInit() {
     const data = await this.supabase.getTableData<Pelicula>('movies');
     this.peliculas.set(data.filter(p => p.activa !== false));

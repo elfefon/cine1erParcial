@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -18,13 +18,61 @@ export class GestionPeliculasComponent implements OnInit {
 
   funcionSeleccionadaParaModificar = signal<any>(null);
 
-  vistaActual = signal<'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas'>('menu');
+  vistaActual = signal<'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones'>('menu');
 
   peliculas = signal<Pelicula[]>([]);
   salas = signal<any[]>([]);
   funciones = signal<any[]>([]);
   
+  // Lista de recomendadas en proceso (para editar antes de guardar)
+  recomendadasBorrador = signal<Pelicula[]>([]);
+  peliculasDisponiblesParaRecomendar = computed(() => {
+    return this.peliculas().filter(p => !this.recomendadasBorrador().some(r => r.id === p.id) && p.activa);
+  });
+
   filtroBusqueda = signal<string>('');
+  
+  tmdbNombreInput = signal<string>('');
+
+  async importarYRecomendar() {
+    const nombre = this.tmdbNombreInput().trim();
+    if (!nombre) {
+      alert('Ingresa el nombre de una película');
+      return;
+    }
+    try {
+      const peliculaGuardada = await this.supabase.buscarEImportarPeliculaPorNombre(nombre);
+      if (peliculaGuardada) {
+         // Marcarla como recomendada directamente en la base de datos
+         const { error } = await this.supabase.client.from('movies').update({ recomendada: true }).eq('id', peliculaGuardada.id);
+         if (error) {
+           console.error("Error BD:", error);
+           alert(`La película se importó, pero ocurrió un error al recomendarla en BD (¿Existe la columna 'recomendada'?): ${error.message}`);
+         }
+         
+         const pFinal = { ...peliculaGuardada, recomendada: true };
+         this.peliculas.update(lista => {
+           const existe = lista.find(x => x.id === pFinal.id);
+           return existe ? lista.map(x => x.id === pFinal.id ? pFinal : x) : [...lista, pFinal];
+         });
+         
+         this.recomendadasBorrador.update(lista => {
+           const existe = lista.find(x => x.id === pFinal.id);
+           return existe ? lista : [...lista, pFinal];
+         });
+
+         this.tmdbNombreInput.set('');
+         if (!error) {
+           alert(`Película "${peliculaGuardada.nombre}" importada y añadida a recomendaciones.`);
+         }
+      } else {
+         alert('No se pudo importar la película. Puede que ya exista o haya ocurrido un error.');
+      }
+    } catch(e: any) {
+      console.error(e);
+      alert(e.message || 'Error importando la película.');
+    }
+  }
 
   peliculaForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -62,6 +110,8 @@ export class GestionPeliculasComponent implements OnInit {
   async cargarPeliculas() {
     const data = await this.supabase.getTableData<Pelicula>('movies');
     this.peliculas.set(data || []);
+    // Inicializar borrador de recomendadas
+    this.recomendadasBorrador.set((data || []).filter(p => p.recomendada));
   }
 
   async cargarSalas() {
@@ -70,17 +120,55 @@ export class GestionPeliculasComponent implements OnInit {
   }
 
   async cargarFunciones() {
-    const { data, error } = await this.supabase.client
-      .from('showtimes')
-      .select(`*, movies (*), rooms (*)`);
+    const { data, error } = await this.supabase.client.from('showtimes').select('*, movies(*), rooms(*)');
     if (!error) {
       this.funciones.set(data || []);
+    } else {
+      console.error('Error cargando funciones:', error);
     }
   }
 
-  cambiarVista(vista: 'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas') {
+  // --- RECOMENDACIONES ---
+
+  async agregarARecomendadas(p: Pelicula) {
+    if (this.recomendadasBorrador().length >= 10) {
+      alert('Solo puedes tener hasta 10 películas recomendadas.');
+      return;
+    }
+    // Guardar en BD inmediatamente
+    const { error } = await this.supabase.client.from('movies').update({ recomendada: true }).eq('id', p.id);
+    if (error) {
+      console.error("Error BD:", error);
+      alert(`Error al recomendar en BD (¿Falta columna 'recomendada'?): ${error.message}`);
+    }
+    
+    // Actualizar estado local
+    this.recomendadasBorrador.update(lista => [...lista, { ...p, recomendada: true }]);
+    this.peliculas.update(lista => lista.map(item => item.id === p.id ? { ...item, recomendada: true } : item));
+  }
+
+  async quitarDeRecomendadas(p: Pelicula) {
+    // Guardar en BD inmediatamente
+    const { error } = await this.supabase.client.from('movies').update({ recomendada: false }).eq('id', p.id);
+    if (error) {
+      console.error("Error BD:", error);
+      alert(`Error al quitar recomendación en BD: ${error.message}`);
+    }
+    
+    // Actualizar estado local
+    this.recomendadasBorrador.update(lista => lista.filter(item => item.id !== p.id));
+    this.peliculas.update(lista => lista.map(item => item.id === p.id ? { ...item, recomendada: false } : item));
+  }
+
+  // --- FIN RECOMENDACIONES ---
+
+  cambiarVista(vista: 'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones') {
     this.vistaActual.set(vista);
     this.filtroBusqueda.set(''); // reset search
+    if (vista === 'recomendaciones') {
+      // reset borrador
+      this.recomendadasBorrador.set(this.peliculas().filter(p => p.recomendada));
+    }
   }
 
   onBuscar(event: Event) {
