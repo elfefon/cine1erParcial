@@ -9,17 +9,24 @@
       <a routerLink="/cartelera" routerLinkActive="active">Cartelera</a>
       <a routerLink="/proximamente" routerLinkActive="active">Próximamente</a>
       <a routerLink="/candy" routerLinkActive="active">🍿 Candy</a>
-      <a routerLink="/carrito" routerLinkActive="active">🛒 Carrito</a>
+    </nav>
+
+    <div class="user-actions">
+      <!-- Carrito pegado a la derecha, previsualiza plata -->
+      <a routerLink="/carrito" routerLinkActive="active" class="cart-btn">
+        🛒 Carrito <span class="cart-total" *ngIf="cart.totalGeneral() > 0">(${{ cart.totalGeneral() }})</span>
+      </a>
+
       @if (authService.usuarioActual()) {
         <a routerLink="/mis-reservas" routerLinkActive="active">Mis Reservas</a>
         @if (authService.usuarioActual()?.rol === 'admin') {
           <a routerLink="/admin" style="color: var(--accent-gold);">Panel Admin</a>
         }
-        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+        <a routerLink="/perfil" class="profile-btn">👤</a>
       } @else {
         <a routerLink="/login" class="btn-login">Iniciar Sesión</a>
       }
-    </nav>
+    </div>
   </header>
 
   <main class="content">

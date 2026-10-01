@@ -7,7 +7,6 @@
 .navbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 16px 40px;
   background: rgba(19, 27, 46, 0.85);
   backdrop-filter: blur(16px);
@@ -22,6 +21,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
+  margin-right: 40px;
 }
 
 .brand-icon {
@@ -64,26 +64,61 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-.btn-logout {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  padding: 8px 18px;
-  border-radius: var(--radius-sm);
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
+.user-actions a {
+  color: var(--text-muted);
+  text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   transition: var(--transition);
 }
 
-.btn-logout:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: white;
-  transform: translateY(-1px);
+.user-actions a:hover,
+.user-actions a.active {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cart-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(52, 211, 153, 0.1) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.cart-btn:hover {
+  background: rgba(52, 211, 153, 0.2) !important;
+}
+
+.cart-total {
+  font-weight: 800;
+}
+
+.profile-btn {
+  font-size: 1.3rem !important;
+  padding: 6px 12px !important;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 50% !important;
+}
+
+.profile-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.05);
 }
 
 .btn-login {
-  background: var(--primary);
+  background: var(--primary) !important;
   color: white !important;
   padding: 8px 20px !important;
   border-radius: var(--radius-sm);
@@ -117,5 +152,10 @@
     padding: 14px 20px;
     flex-direction: column;
     gap: 16px;
+  }
+  .user-actions {
+    margin-left: 0;
+    justify-content: center;
+    width: 100%;
   }
 }
