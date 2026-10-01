@@ -2,8 +2,8 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CartService } from '../../../core/services/cart.service';
 import { Pelicula } from '../../../models/pelicula.interface';
-import { Combo } from '../../../models/combo.interface';
 
 interface Butaca {
   id: string; // uuid de seats
@@ -28,17 +28,15 @@ export class ReservaButacasComponent implements OnInit {
   private router = inject(Router);
   private supabase = inject(SupabaseService);
   private auth = inject(AuthService);
+  private cart = inject(CartService);
 
   peliculaId = signal<string>('');
   pelicula = signal<Pelicula | null>(null);
   showtimeId = signal<string>('');
+  showtimeRaw = signal<any>(null);
   
   butacas = signal<Butaca[]>([]);
   
-  // Combos
-  combosDisponibles = signal<Combo[]>([]);
-  carritoCombos = signal<Combo[]>([]);
-
   loading = signal(false);
   mensajeExito = signal('');
 
@@ -49,9 +47,7 @@ export class ReservaButacasComponent implements OnInit {
   });
 
   total = computed(() => {
-    const totalButacas = this.butacasSeleccionadasCount() * this.precioButaca;
-    const totalCombos = this.carritoCombos().reduce((acc, combo) => acc + combo.precio, 0);
-    return totalButacas + totalCombos;
+    return this.butacasSeleccionadasCount() * this.precioButaca;
   });
 
   async ngOnInit() {
@@ -60,28 +56,14 @@ export class ReservaButacasComponent implements OnInit {
   }
 
   async cargarDatos() {
-    console.log('--- [CARGAR DATOS RESERVA] ---');
-    console.log('peliculaId:', this.peliculaId());
-
-    // 1. Traer la peli
     const resPeli = await this.supabase.client.from('movies').select('*').eq('id', this.peliculaId()).single();
-    if (resPeli.error) {
-      console.error('Error al traer pelicula:', resPeli.error);
-    } else {
-      console.log('Pelicula cargada:', resPeli.data);
+    if (resPeli.data) {
       this.pelicula.set(resPeli.data);
     }
 
-    // 2. Traer Combos
-    const dataCombos = await this.supabase.getTableData<Combo>('candy_products');
-    this.combosDisponibles.set(dataCombos);
-
-    // 3. Traer la función específica si viene por query param, o la primera por defecto
     const showtimeParam = this.route.snapshot.queryParamMap.get('showtime');
-    console.log('Query param showtime:', showtimeParam);
 
     let query = this.supabase.client.from('showtimes').select('*');
-    
     if (showtimeParam) {
       query = query.eq('id', showtimeParam);
     } else {
@@ -89,55 +71,18 @@ export class ReservaButacasComponent implements OnInit {
     }
     
     const resShowtime = await query.single();
-
-    if (resShowtime.error) {
-      console.error('Error al traer showtime/función:', resShowtime.error);
-      return;
-    }
-
-    if (!resShowtime.data) {
-      console.warn('No hay funciones (showtimes) para esta película.');
-      return;
-    }
+    if (!resShowtime.data) return;
     
     const showtime = resShowtime.data;
-    console.log('Showtime seleccionado:', showtime);
     this.showtimeId.set(showtime.id);
+    this.showtimeRaw.set(showtime);
 
-    // 4. Traer los asientos físicos (seats) de la sala (room) de esa función
-    console.log('Buscando asientos para room_id:', showtime.room_id);
-    const resSeats = await this.supabase.client.from('seats')
-      .select('*')
-      .eq('room_id', showtime.room_id);
-
-    if (resSeats.error) {
-      console.error('Error al traer asientos (seats):', resSeats.error);
-      return;
-    }
-
-    console.log('Asientos (seats) encontrados en la BDD:', resSeats.data);
+    const resSeats = await this.supabase.client.from('seats').select('*').eq('room_id', showtime.room_id);
     const dbSeats = resSeats.data || [];
 
-    if (dbSeats.length === 0) {
-      console.warn('La tabla "seats" no devolvió ninguna butaca para el room_id:', showtime.room_id);
-      
-      // Diagnóstico: consultar si hay asientos en general en la tabla 'seats'
-      const checkAllSeats = await this.supabase.client.from('seats').select('*').limit(5);
-      console.log('Muestra general de tabla "seats" (sin filtro de sala):', checkAllSeats.data, 'Error:', checkAllSeats.error);
-    }
-
-    // 5. Traer las reservas ya hechas (seat_reservations) para esta función
-    const resReservations = await this.supabase.client.from('seat_reservations')
-      .select('seat_id')
-      .eq('showtime_id', showtime.id);
-
-    if (resReservations.error) {
-      console.error('Error al traer seat_reservations:', resReservations.error);
-    }
-
+    const resReservations = await this.supabase.client.from('seat_reservations').select('seat_id').eq('showtime_id', showtime.id);
     const occupiedSeatIds = (resReservations.data || []).map(r => r.seat_id);
 
-    // 6. Mapear al modelo que usa el HTML y ordenar
     const mappedButacas: Butaca[] = dbSeats.map(seat => ({
       id: seat.id,
       numero_butaca: seat.numero_butaca || seat.seat_number || `${seat.fila || ''}${seat.columna || ''}`,
@@ -148,8 +93,6 @@ export class ReservaButacasComponent implements OnInit {
     }));
 
     mappedButacas.sort((a, b) => (a.fila || '').localeCompare(b.fila || '') || a.columna - b.columna);
-
-    console.log('Butacas finales mapeadas para renderizar:', mappedButacas);
     this.butacas.set(mappedButacas);
   }
 
@@ -178,96 +121,23 @@ export class ReservaButacasComponent implements OnInit {
     });
   }
 
-  agregarCombo(combo: Combo) {
-    this.carritoCombos.update(lista => [...lista, combo]);
-  }
-
-  removerCombo(index: number) {
-    this.carritoCombos.update(lista => lista.filter((_, i) => i !== index));
-  }
-
-  async confirmarReserva() {
+  agregarAlCarrito() {
     if (this.butacasSeleccionadasCount() === 0) {
       alert('Debe seleccionar al menos una butaca');
       return;
     }
+    const seleccionadas = this.butacas().filter(b => b.estado === 'seleccionada');
+    
+    this.cart.addTickets({
+      id_funcion: this.showtimeId(),
+      pelicula_nombre: this.pelicula()?.nombre || 'Desconocida',
+      butacas: seleccionadas.map(b => b.numero_butaca),
+      precioButaca: this.precioButaca,
+      precioTotal: this.total(),
+      funcion_raw: this.showtimeRaw(),
+      pelicula_raw: this.pelicula()
+    });
 
-    if (!this.showtimeId()) {
-      alert('No hay función asignada para reservar.');
-      return;
-    }
-
-    const usuario = this.auth.usuarioActual();
-    if (!usuario) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    this.loading.set(true);
-
-    try {
-      const seleccionadas = this.butacas().filter(b => b.estado === 'seleccionada');
-      
-      // Generar código de venta y qr únicos
-      const randomCode = Math.random().toString(36).substring(2, 9).toUpperCase();
-      const codigoVenta = `TKT-${Date.now()}-${randomCode}`;
-      const qrData = JSON.stringify({
-        codigo: codigoVenta,
-        user_id: usuario.id,
-        showtime_id: this.showtimeId(),
-        seats: seleccionadas.map(b => b.numero_butaca),
-        total: this.total()
-      });
-
-      // 1. Insertamos el Ticket con el schema exacto de la tabla tickets
-      const payloadTicket = {
-        user_id: usuario.id,
-        total_pagado: this.total(),
-        puntos_generados: Math.floor(this.total() / 5),
-        codigo_venta: codigoVenta,
-        qr_codigo: qrData,
-        estado: 'valido',
-        fecha_compra: new Date().toISOString()
-      };
-
-      console.log('Enviando ticket a Supabase:', payloadTicket);
-      const ticketInsertado = await this.supabase.insertData<any>('tickets', payloadTicket);
-      console.log('Ticket creado con éxito:', ticketInsertado);
-
-      // 2. Insertamos la ocupación real en seat_reservations para bloquearlas
-      const reservasPayload = seleccionadas.map(b => ({
-        showtime_id: this.showtimeId(),
-        ticket_id: ticketInsertado.id,
-        tipo_butaca: b.tipo_butaca,
-        precio_pagado: this.precioButaca,
-        seat_id: b.id
-      }));
-
-      const resReservas = await this.supabase.client.from('seat_reservations').insert(reservasPayload);
-      if (resReservas.error) throw resReservas.error;
-
-      // 3. Actualizamos ventas_totales en la película (cantidad de butacas vendidas)
-      const peliculaData = this.pelicula();
-      if (peliculaData && peliculaData.id) {
-        const ventasActuales = peliculaData.ventas_totales || 0;
-        const nuevasVentas = ventasActuales + seleccionadas.length;
-        const resVentas = await this.supabase.client.from('movies').update({ ventas_totales: nuevasVentas }).eq('id', peliculaData.id);
-        if (resVentas.error) {
-          console.error('Error al actualizar ventas_totales de la pelicula:', resVentas.error);
-        }
-      }
-
-      this.mensajeExito.set('¡Reserva confirmada con éxito!');
-      
-      setTimeout(() => {
-        this.router.navigate(['/cartelera']);
-      }, 3000);
-      
-    } catch (e) {
-      console.error(e);
-      alert('Error al procesar reserva');
-    } finally {
-      this.loading.set(false);
-    }
+    this.router.navigate(['/carrito']);
   }
 }

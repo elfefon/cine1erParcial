@@ -1,0 +1,92 @@
+<div class="carrito-container">
+  <h2>🛒 Tu Carrito</h2>
+  
+  @if (mensajeExito()) {
+    <div class="success-msg">
+      🎉 {{ mensajeExito() }}
+    </div>
+  } @else {
+    @if (cart.totalGeneral() === 0) {
+      <div class="empty-cart">
+        <h3>Tu carrito está vacío</h3>
+        <p>Parece que aún no has agregado entradas ni productos de candy.</p>
+        <button class="btn-primary" routerLink="/cartelera">Ir a Cartelera</button>
+      </div>
+    } @else {
+      <div class="cart-layout">
+        <div class="cart-items">
+          
+          @if (cart.tickets().length > 0) {
+            <div class="section-card">
+              <h3>🎬 Entradas de Cine</h3>
+              @for (t of cart.tickets(); track $index) {
+                <div class="cart-item">
+                  <div class="item-info">
+                    <h4>{{ t.pelicula_nombre }}</h4>
+                    <p>Butacas: {{ t.butacas.join(', ') }}</p>
+                  </div>
+                  <div class="item-actions">
+                    <span class="price">${{ t.precioTotal }}</span>
+                    <button class="btn-remove" (click)="removerTickets($index)">Quitar</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (cart.candy().length > 0) {
+            <div class="section-card">
+              <h3>🍿 Candy Shop</h3>
+              @for (c of cart.candy(); track c.producto.id) {
+                <div class="cart-item">
+                  <div class="item-img">
+                    <img [src]="c.producto.imagen_url || 'https://via.placeholder.com/100x100?text=Candy'" [alt]="c.producto.nombre">
+                  </div>
+                  <div class="item-info">
+                    <h4>{{ c.producto.nombre }}</h4>
+                    <p class="unit-price">${{ c.producto.precio }} c/u</p>
+                  </div>
+                  <div class="item-actions">
+                    <div class="quantity-controls">
+                      <button (click)="actualizarCantidadCandy(c.producto.id, c.cantidad - 1)">-</button>
+                      <span>{{ c.cantidad }}</span>
+                      <button (click)="actualizarCantidadCandy(c.producto.id, c.cantidad + 1)">+</button>
+                    </div>
+                    <span class="price">${{ c.producto.precio * c.cantidad }}</span>
+                    <button class="btn-remove icon-btn" (click)="removerCandy(c.producto.id)">🗑️</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="cart-summary">
+          <h3>Resumen de Compra</h3>
+          
+          <div class="summary-row">
+            <span>Subtotal Entradas:</span>
+            <span>${{ cart.totalTickets() }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Subtotal Candy:</span>
+            <span>${{ cart.totalCandy() }}</span>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="summary-total">
+            <span>Total a Pagar:</span>
+            <span>${{ cart.totalGeneral() }}</span>
+          </div>
+          
+          <button class="btn-checkout" (click)="confirmarCompra()" [disabled]="loading()">
+            {{ loading() ? 'Procesando...' : 'Confirmar Compra' }}
+          </button>
+          
+          <button class="btn-continue" routerLink="/candy">Agregar más Candy</button>
+        </div>
+      </div>
+    }
+  }
+</div>

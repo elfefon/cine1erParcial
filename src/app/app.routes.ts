@@ -12,6 +12,8 @@ import { LayoutClienteComponent } from './features/cliente/layout-cliente/layout
 import { CarteleraComponent } from './features/cliente/cartelera/cartelera.component';
 import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
 import { ReservaButacasComponent } from './features/cliente/reserva-butacas/reserva-butacas.component';
+import { CandyComponent } from './features/cliente/candy/candy.component';
+import { CarritoComponent } from './features/cliente/carrito/carrito.component';
 
 import { HomeComponent } from './features/admin/home/home.component';
 import { CuponesComponent } from './features/admin/cupones/cupones.component';
@@ -43,7 +45,9 @@ export const routes: Routes = [
       { path: 'cartelera', component: CarteleraComponent },
       { path: 'proximamente', component: ProximamenteComponent },
       { path: 'pelicula/:id', component: DetallePeliculaComponent },
-      { path: 'reserva/:id', component: ReservaButacasComponent }
+      { path: 'reserva/:id', component: ReservaButacasComponent },
+      { path: 'candy', component: CandyComponent },
+      { path: 'carrito', component: CarritoComponent }
     ]
   },
   { path: '**', redirectTo: 'cartelera' }

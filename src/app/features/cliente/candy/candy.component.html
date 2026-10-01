@@ -1,0 +1,112 @@
+<div class="candy-container">
+  <header class="candy-header">
+    <h2>🍿 Candy Shop</h2>
+    <p>Acompañá tu película con las mejores opciones</p>
+  </header>
+
+  <div class="candy-search">
+    <input type="text" placeholder="Buscar productos..." (input)="buscar($event)" class="search-input">
+    
+    <div class="filter-chips">
+      <button class="chip" [class.active]="filtroCategoria() === 'todos'" (click)="seleccionarFiltro('todos')">Todos</button>
+      <button class="chip" [class.active]="filtroCategoria() === 'combo'" (click)="seleccionarFiltro('combo')">Combos</button>
+      @for (cat of categoriasDisponibles(); track cat) {
+        <button class="chip" [class.active]="filtroCategoria() === cat" (click)="seleccionarFiltro(cat)">{{ cat }}</button>
+      }
+    </div>
+  </div>
+
+  @if (filtroCategoria() === 'todos' && !filtroBusqueda()) {
+    
+    @if (combosRecomendados().length > 0) {
+      <section class="carousel-section">
+        <h3 class="section-title">🌟 Combos Recomendados</h3>
+        <div class="carousel">
+          @for (combo of combosRecomendados(); track combo.id) {
+            <div class="candy-card combo-card-special">
+              <div class="img-wrapper">
+                <img [src]="combo.imagen_url || 'https://via.placeholder.com/300x200?text=Combo'" [alt]="combo.nombre">
+              </div>
+              <div class="candy-info">
+                <h4>{{ combo.nombre }}</h4>
+                <p class="price">${{ combo.precio }}</p>
+                <button class="btn-add" (click)="agregar(combo)">Agregar</button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="products-section">
+      <h3 class="section-title">🥤 Todos los Combos</h3>
+      <div class="products-grid">
+        @for (p of todosLosCombos(); track p.id) {
+          <div class="candy-card">
+            <div class="img-wrapper">
+              <img [src]="p.imagen_url || 'https://via.placeholder.com/300x200?text=Candy'" [alt]="p.nombre">
+            </div>
+            <div class="candy-info">
+              <h4>{{ p.nombre }}</h4>
+              <p class="category">Combo</p>
+              <div class="bottom-row">
+                <span class="price">${{ p.precio }}</span>
+                <button class="btn-add" (click)="agregar(p)">+</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <div style="margin-top: 50px;"></div>
+
+    <section class="products-section">
+      <h3 class="section-title">🍫 Todos los Productos</h3>
+      <div class="products-grid">
+        @for (p of todosLosProductosIndividuales(); track p.id) {
+          <div class="candy-card">
+            <div class="img-wrapper">
+              <img [src]="p.imagen_url || 'https://via.placeholder.com/300x200?text=Candy'" [alt]="p.nombre">
+            </div>
+            <div class="candy-info">
+              <h4>{{ p.nombre }}</h4>
+              <p class="category">{{ p.categoria }}</p>
+              <div class="bottom-row">
+                <span class="price">${{ p.precio }}</span>
+                <button class="btn-add" (click)="agregar(p)">+</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+  } @else {
+    
+    <section class="products-section">
+      <h3 class="section-title">
+        Resultados Filtrados ({{ filtroCategoria() === 'todos' ? 'Búsqueda' : (filtroCategoria() === 'combo' ? 'Combos' : filtroCategoria()) }})
+      </h3>
+      
+      <div class="products-grid">
+        @for (p of productosFiltrados(); track p.id) {
+          <div class="candy-card">
+            <div class="img-wrapper">
+              <img [src]="p.imagen_url || 'https://via.placeholder.com/300x200?text=Candy'" [alt]="p.nombre">
+            </div>
+            <div class="candy-info">
+              <h4>{{ p.nombre }}</h4>
+              <p class="category">{{ p.nombre.toLowerCase().startsWith('combo') ? 'Combo' : p.categoria }}</p>
+              <div class="bottom-row">
+                <span class="price">${{ p.precio }}</span>
+                <button class="btn-add" (click)="agregar(p)">+</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+</div>

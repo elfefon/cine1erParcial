@@ -2,7 +2,7 @@
   @if (pelicula(); as p) {
     <div class="reserva-header">
       <h2>Reservar Entradas para {{ p.nombre }}</h2>
-      <p>Seleccioná tus butacas en la sala y agregá los combos que desees</p>
+      <p>Seleccioná tus butacas en la sala</p>
     </div>
   }
 
@@ -23,52 +23,20 @@
       ></app-mapa-butacas>
     }
 
-    <div class="combos-section">
-      <h3>🥤 Combos Disponibles</h3>
-      <div class="combos-grid">
-        @for (combo of combosDisponibles(); track combo.id) {
-          <div class="combo-card">
-            <div class="combo-info">
-              <h4>{{ combo.nombre }}</h4>
-              <p>{{ combo.descripcion }}</p>
-            </div>
-            <div class="combo-footer">
-              <span class="combo-price">${{ combo.precio }}</span>
-              <button class="btn-add-combo" (click)="agregarCombo(combo)">+ Agregar</button>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-
     <div class="resumen-card">
-      <h3>Resumen de la Reserva</h3>
+      <h3>Resumen de Entradas</h3>
       <div class="summary-item">
         <span>Butacas seleccionadas (x{{ butacasSeleccionadasCount() }})</span>
-        <span>${{ butacasSeleccionadasCount() * precioButaca }}</span>
+        <span>${{ total() }}</span>
       </div>
-      
-      @if (carritoCombos().length > 0) {
-        <div class="summary-item" style="font-weight: 700; color: var(--text-main); margin-top: 12px;">
-          <span>Combos agregados:</span>
-        </div>
-        <ul class="combo-list">
-          @for (c of carritoCombos(); track $index) {
-            <li class="combo-item">
-              <span>🍿 {{ c.nombre }} - ${{ c.precio }}</span>
-              <button class="btn-remove" (click)="removerCombo($index)">Quitar</button>
-            </li>
-          }
-        </ul>
-      }
 
       <div class="total-bar">
-        <span class="total-label">Total a pagar:</span>
+        <span class="total-label">Subtotal:</span>
         <span class="total-price">${{ total() }}</span>
       </div>
       
-      <button class="btn-confirmar" (click)="confirmarReserva()" [disabled]="loading()">
-        {{ loading() ? 'Procesando Reserva...' : 'Confirmar Reserva' }}
+      <button class="btn-confirmar" (click)="agregarAlCarrito()" [disabled]="loading()">
+        {{ loading() ? 'Procesando...' : 'Ir al Carrito' }}
       </button>
     </div>
   }

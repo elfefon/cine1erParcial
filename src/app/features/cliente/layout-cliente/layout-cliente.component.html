@@ -8,6 +8,8 @@
     <nav class="nav-links">
       <a routerLink="/cartelera" routerLinkActive="active">Cartelera</a>
       <a routerLink="/proximamente" routerLinkActive="active">Próximamente</a>
+      <a routerLink="/candy" routerLinkActive="active">🍿 Candy</a>
+      <a routerLink="/carrito" routerLinkActive="active">🛒 Carrito</a>
       @if (authService.usuarioActual()) {
         <a routerLink="/mis-reservas" routerLinkActive="active">Mis Reservas</a>
         @if (authService.usuarioActual()?.rol === 'admin') {
