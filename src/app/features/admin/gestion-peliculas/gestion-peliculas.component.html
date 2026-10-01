@@ -141,6 +141,8 @@
     <div *ngSwitchCase="'ver-peliculas'">
       <div class="table-card">
         <h3>Películas Registradas</h3>
+        <input type="text" class="search-bar" placeholder="Buscar película..." (input)="onBuscarPeliculaTabla($event)">
+        
         <table class="data-table">
           <thead>
             <tr>
@@ -150,7 +152,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (p of peliculas(); track p.id) {
+            @for (p of peliculasTablaFiltradas(); track p.id) {
               <tr>
                 <td style="font-weight: 700;">{{ p.nombre }}</td>
                 <td style="color: var(--text-muted); max-width: 400px;">{{ p.sinopsis }}</td>
@@ -180,12 +182,27 @@
           <div class="form-grid">
             <div class="form-group">
               <label for="pelicula_id">Película</label>
-              <select id="pelicula_id" formControlName="pelicula_id">
+              
+              <!-- Select oculto para mantener la validación y el formGroup -->
+              <select id="pelicula_id" formControlName="pelicula_id" style="display: none;">
                 <option value="">Seleccione una película</option>
                 @for (p of peliculas(); track p.id) {
                   <option [value]="p.id">{{ p.nombre }}</option>
                 }
               </select>
+
+              <!-- Input con datalist (buscador nativo) -->
+              <input type="text" 
+                     placeholder="🔍 Escribe para buscar una película..." 
+                     list="peliculas-list"
+                     [value]="getNombrePelicula(funcionForm.get('pelicula_id')?.value)"
+                     (change)="onSeleccionarPeliculaList($event)">
+                     
+              <datalist id="peliculas-list">
+                @for (p of peliculas(); track p.id) {
+                  <option [value]="p.nombre"></option>
+                }
+              </datalist>
             </div>
             <div class="form-group">
               <label for="horario">Horario</label>

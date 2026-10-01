@@ -8,13 +8,28 @@
     <form [formGroup]="funcionForm" (ngSubmit)="onSubmit()" class="modal-body">
       <div class="form-grid">
         <div class="form-group full-width">
-          <label for="pelicula_id">Película</label>
-          <select id="pelicula_id" formControlName="pelicula_id">
+          <label for="pelicula_id_mod">Película</label>
+          
+          <!-- Select oculto para mantener la validación y el formGroup -->
+          <select id="pelicula_id_mod" formControlName="pelicula_id" style="display: none;">
             <option value="">Seleccione una película</option>
             @for (p of peliculas; track p.id) {
               <option [value]="p.id">{{ p.nombre }}</option>
             }
           </select>
+
+          <!-- Input con datalist (buscador nativo) -->
+          <input type="text" 
+                 placeholder="🔍 Escribe para buscar una película..." 
+                 list="peliculas-list-mod"
+                 [value]="getNombrePelicula(funcionForm.get('pelicula_id')?.value)"
+                 (change)="onSeleccionarPeliculaList($event)">
+                 
+          <datalist id="peliculas-list-mod">
+            @for (p of peliculas; track p.id) {
+              <option [value]="p.nombre"></option>
+            }
+          </datalist>
         </div>
 
         <div class="form-group">

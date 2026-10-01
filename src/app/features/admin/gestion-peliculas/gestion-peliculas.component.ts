@@ -31,6 +31,20 @@ export class GestionPeliculasComponent implements OnInit {
   });
 
   filtroBusqueda = signal<string>('');
+  filtroPeliculaDropdown = signal<string>('');
+  filtroPeliculaTabla = signal<string>('');
+
+  peliculasDropdownFiltradas = computed(() => {
+    const s = this.filtroPeliculaDropdown().toLowerCase();
+    if (!s) return this.peliculas();
+    return this.peliculas().filter(p => p.nombre.toLowerCase().includes(s));
+  });
+
+  peliculasTablaFiltradas = computed(() => {
+    const s = this.filtroPeliculaTabla().toLowerCase();
+    if (!s) return this.peliculas();
+    return this.peliculas().filter(p => p.nombre.toLowerCase().includes(s));
+  });
 
   tmdbNombreInput = signal<string>('');
 
@@ -176,6 +190,27 @@ export class GestionPeliculasComponent implements OnInit {
     this.filtroBusqueda.set(target.value.toLowerCase());
   }
 
+  onBuscarPeliculaTabla(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.filtroPeliculaTabla.set(target.value.toLowerCase());
+  }
+
+  getNombrePelicula(id: string | null | undefined): string {
+    if (!id) return '';
+    return this.peliculas().find(p => p.id === id)?.nombre || '';
+  }
+
+  onSeleccionarPeliculaList(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const nombre = target.value;
+    const p = this.peliculas().find(x => x.nombre === nombre);
+    if (p) {
+      this.funcionForm.patchValue({ pelicula_id: p.id });
+    } else {
+      this.funcionForm.patchValue({ pelicula_id: '' });
+    }
+  }
+
   get funcionesFiltradas() {
     if (!this.filtroBusqueda()) return this.funciones();
     return this.funciones().filter(f => {
@@ -213,8 +248,20 @@ export class GestionPeliculasComponent implements OnInit {
     if (this.funcionForm.valid) {
       const formValue = this.funcionForm.getRawValue();
 
-      // Validación de choque de horarios
+      // Validación de fecha de estreno (Pre-venta máxima 1 semana)
       const peliculaSeleccionada = this.peliculas().find(p => p.id === formValue.pelicula_id);
+      
+      if (peliculaSeleccionada?.fecha_estreno) {
+        const fechaEstreno = new Date(peliculaSeleccionada.fecha_estreno).getTime();
+        const hoyDate = new Date();
+        hoyDate.setHours(0, 0, 0, 0); // Establecer a la medianoche de hoy
+        const limiteMaximo = hoyDate.getTime() + (7 * 24 * 60 * 60 * 1000); // Hoy + 7 días en milisegundos
+        
+        if (fechaEstreno > limiteMaximo) {
+          alert('Error: No se puede crear la función. La película pertenece a "Próximamente" y su estreno es en más de 1 semana.');
+          return;
+        }
+      }
       const duracionNuevo = peliculaSeleccionada?.duracion_min || 120; // 120 min fallback
       const inicioNuevo = new Date(formValue.horario).getTime();
       const finNuevo = inicioNuevo + (duracionNuevo * 60000); // ms

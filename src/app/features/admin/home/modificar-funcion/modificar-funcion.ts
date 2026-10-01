@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SupabaseService } from '../../../../core/services/supabase.service';
@@ -29,6 +29,22 @@ export class ModificarFuncion implements OnInit {
     precio: [0, [Validators.required, Validators.min(0)]],
     formato: [{value: '', disabled: true}]
   });
+
+  getNombrePelicula(id: string | null | undefined): string {
+    if (!id) return '';
+    return this.peliculas.find(p => p.id === id)?.nombre || '';
+  }
+
+  onSeleccionarPeliculaList(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const nombre = target.value;
+    const p = this.peliculas.find(x => x.nombre === nombre);
+    if (p) {
+      this.funcionForm.patchValue({ pelicula_id: p.id });
+    } else {
+      this.funcionForm.patchValue({ pelicula_id: '' });
+    }
+  }
 
   ngOnInit() {
     if (this.funcion) {

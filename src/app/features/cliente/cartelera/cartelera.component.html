@@ -11,7 +11,7 @@
         <h3 class="section-subtitle" style="color: #34d399; margin-bottom: 24px;">⭐ Nuestras Recomendaciones</h3>
         <div class="movies-grid ranking-grid">
           @for (p of recomendadasPeliculas(); track p.id) {
-            <div class="movie-card ranking-card">
+            <div class="movie-card recom-card">
               <div class="poster-wrapper">
                 <div class="badge-tag" style="background: #10b981;">Recomendada</div>
                 <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre" class="poster-img">
@@ -35,18 +35,13 @@
       <h3 class="ranking-title">🏆 Ranking Más Vistas</h3>
       <div class="movies-grid ranking-grid">
         @for (p of topPeliculas(); track p.id; let i = $index) {
-          <div class="movie-card ranking-card">
+          <a [routerLink]="['/pelicula', p.id]" class="ranking-card">
+            <div class="netflix-number">{{ i + 1 }}</div>
             <div class="poster-wrapper">
-              <div class="ranking-badge">{{ i + 1 }}</div>
               <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre" class="poster-img">
-              <div class="poster-overlay"></div>
+              <span class="badge-tag" style="bottom: 10px; top: auto; right: auto; left: 50%; transform: translateX(-50%); width: 90%; text-align: center; font-size: 0.65rem;">En Cartelera</span>
             </div>
-            
-            <div class="card-body">
-              <h3 class="card-title">{{ p.nombre }}</h3>
-              <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
-            </div>
-          </div>
+          </a>
         }
       </div>
     </div>

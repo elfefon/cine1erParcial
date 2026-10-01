@@ -54,11 +54,15 @@ export class SupabaseService {
     console.error("❌ Error en el proceso masivo:", error.message);
   }
 }
-
+*/
 
 //funcion para poblar seccion PROXIMAMENTE
   async poblarProximosEstrenos() {
     const tmdbApiKey = environment.tmbd_key; 
+
+   // Obtenemos el año actual dinámicamente y seteamos la fecha al 1 de noviembre
+    const anioActual = new Date().getFullYear();
+    const fechaInicio = `${anioActual}-11-01`;
 
     const tmdbGenres: { [key: number]: string } = {
       28: 'Acción', 12: 'Aventura', 16: 'Animación', 35: 'Comedia', 80: 'Crimen',
@@ -69,10 +73,12 @@ export class SupabaseService {
     };
 
     try {
-      // 1. Obtener páginas de TMDB usando api_key en la URL
       let upcomingMovies: any[] = [];
+      
+      // Pedimos 3 páginas para tener un buen margen después de filtrar duplicados
       for (let page = 1; page <= 3; page++) {
-        const url = `https://api.themoviedb.org/3/movie/upcoming?language=es-ES&page=${page}&api_key=${tmdbApiKey}`;
+        // Usamos discover/movie ordenado por fecha ascendente a partir del 1 de noviembre
+        const url = `https://api.themoviedb.org/3/discover/movie?language=es-ES&primary_release_date.gte=${fechaInicio}&sort_by=primary_release_date.asc&page=${page}&api_key=${tmdbApiKey}`;
         
         const response = await fetch(url, {
           method: 'GET',
@@ -82,37 +88,36 @@ export class SupabaseService {
         });
         const data = await response.json();
         
-        // Validación de seguridad para evitar que 'data.results' rompa el código
         if (data && data.results) {
           upcomingMovies = upcomingMovies.concat(data.results);
         } else {
-          console.warn(`Error en la página ${page} de TMDB. Revisa tu API Key. Respuesta:`, data);
+          console.warn(`Error en la página ${page} de TMDB. Respuesta:`, data);
         }
       }
 
-      // Si no se cargó nada, abortamos
       if (upcomingMovies.length === 0) {
         console.error('No se pudo obtener ninguna película de TMDB. Abortando inserción.');
         return;
       }
 
-      upcomingMovies = upcomingMovies.slice(0, 50);
-
-      // 2. Obtener películas existentes de tu base de datos
+      // Obtener películas existentes de tu base de datos para no duplicar
       const peliculasExistentes = await this.getTableData('movies');
       const nombresExistentes = peliculasExistentes.map((p: any) => p.nombre);
 
-      // 3. Filtrar las que ya existen
-      const peliculasAInsertar = upcomingMovies.filter(
+      // Filtrar las que ya existen en tu base de datos
+      let peliculasAInsertar = upcomingMovies.filter(
         movie => movie && movie.title && !nombresExistentes.includes(movie.title)
       );
 
+      // REGLA: Cortar el array para insertar SOLO LAS PRIMERAS 20
+      peliculasAInsertar = peliculasAInsertar.slice(0, 20);
+
       if (peliculasAInsertar.length === 0) {
-        console.log('Las películas próximas a estrenar ya están en la base de datos. No se insertó ningún duplicado.');
+        console.log('Las primeras 20 películas de noviembre en adelante ya están en la base de datos.');
         return;
       }
 
-      // 4. Mapear al esquema de Supabase
+      // Mapear al esquema de Supabase
       const moviesToInsert = peliculasAInsertar.map(movie => {
         const generosReales = movie.genre_ids 
           ? movie.genre_ids.map((id: number) => tmdbGenres[id]).filter(Boolean)
@@ -121,7 +126,7 @@ export class SupabaseService {
         return {
           nombre: movie.title,
           sinopsis: movie.overview || 'Sinopsis no disponible',
-          duracion_min: 120, // El promedio para cumplir el requerimiento
+          duracion_min: 120, // Promedio estipulado
           imagen_url: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
           restriccion_edad: movie.adult ? 18 : 0, 
           generos: generosReales.length > 0 ? generosReales : ['Género no disponible'],
@@ -129,19 +134,19 @@ export class SupabaseService {
         };
       });
 
-      // 5. Insertar el bloque limpio en Supabase
+      // Insertar el bloque limpio en Supabase
       const { data, error } = await this._supabase.from('movies').insert(moviesToInsert);
       
       if (error) throw error;
       
-      console.log(`¡Éxito! Se insertaron ${moviesToInsert.length} nuevas películas próximas a estrenar.`);
+      console.log(`¡Éxito! Se insertaron ${moviesToInsert.length} nuevas películas a partir de noviembre.`);
 
     } catch (error) {
       console.error('Error inesperado poblando las películas:', error);
     }
   }
     
-*/
+
 
   // Función para calcular la edad
   private obtenerRestriccionEdad(releaseDates: any): number {

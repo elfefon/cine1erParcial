@@ -169,7 +169,9 @@
 .ranking-grid {
   display: flex;
   overflow-x: auto;
-  gap: 20px;
+  overflow-y: hidden;
+  gap: 20px; /* Separar más entre cada posición */
+  padding-top: 10px;
   padding-bottom: 20px;
   scroll-snap-type: x mandatory;
 }
@@ -188,29 +190,62 @@
   border-radius: 4px;
 }
 
-.ranking-card {
-  min-width: 200px;
-  max-width: 200px;
+.recom-card {
+  min-width: 260px;
+  max-width: 260px;
   scroll-snap-align: start;
 }
 
-.ranking-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  border-radius: 50%;
+.ranking-card {
+  min-width: 420px; /* Tarjeta aún más ancha para despegar la foto del número */
+  max-width: 420px;
+  scroll-snap-align: start;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: 800;
-  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.4);
-  z-index: 10;
-  border: 2px solid var(--bg-dark);
+  flex-direction: row;
+  align-items: center; /* Regla solicitada */
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative; /* Regla solicitada */
+  overflow: visible;
+  padding-bottom: 20px;
+}
+
+.ranking-card:hover {
+  transform: scale(1.02);
+}
+
+.netflix-number {
+  font-size: 420px; 
+  font-weight: 900;
+  line-height: 0.75; 
+  color: transparent; 
+  -webkit-text-stroke: 3px #4a4a4a; 
+  letter-spacing: -90px; 
+  position: absolute; 
+  left: -10px; /* Ajustado para que el número quede a la vista */
+  z-index: 1; 
+  font-family: 'Arial Black', Impact, sans-serif;
+  transform: translateY(20px);
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%); 
+  mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0) 100%);
+}
+
+.ranking-card .poster-wrapper {
+  width: 210px;
+  flex-shrink: 0;
+  z-index: 2; /* Regla solicitada */
+  margin-left: auto; /* Regla solicitada */
+  border-radius: 6px;
+  box-shadow: -20px 0 30px rgba(0,0,0,0.8); /* Regla solicitada */
+  aspect-ratio: 2/3;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ranking-card:hover .poster-wrapper {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0,0,0,1);
 }
 
 .divider {
