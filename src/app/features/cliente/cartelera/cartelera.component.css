@@ -260,3 +260,32 @@
   color: var(--text-main);
   margin-bottom: 24px;
 }
+
+@media (max-width: 768px) {
+  .ranking-card {
+    min-width: 300px;
+    max-width: 300px;
+    transform: scale(0.9);
+  }
+  .netflix-number {
+    font-size: 300px;
+    letter-spacing: -65px;
+  }
+  .ranking-card .poster-wrapper {
+    width: 150px;
+  }
+  .movies-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+  .card-body {
+    padding: 12px;
+  }
+  .card-title {
+    font-size: 1rem;
+  }
+  .btn-details {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+}

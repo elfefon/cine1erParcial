@@ -14,13 +14,23 @@ import { Pelicula } from '../../../models/pelicula.interface';
 export class ProximamenteComponent implements OnInit {
   private supabase = inject(SupabaseService);
   peliculasProximamente = signal<Pelicula[]>([]);
+  peliculasPreventa = signal<Pelicula[]>([]);
 
   async ngOnInit() {
     const data = await this.supabase.getTableData<Pelicula>('movies');
     const hoy = new Date().toISOString().split('T')[0];
     
     // Solo películas con fecha de estreno en el futuro
-    const peliculasFiltradas = data.filter(p => p.fecha_estreno && p.fecha_estreno > hoy);
-    this.peliculasProximamente.set(peliculasFiltradas);
+    const peliculasFuturas = data.filter(p => p.fecha_estreno && p.fecha_estreno > hoy);
+
+    // Buscar showtimes para saber cuáles tienen funciones programadas
+    const { data: showtimes } = await this.supabase.client.from('showtimes').select('movie_id');
+    const moviesConFunciones = new Set((showtimes || []).map(s => s.movie_id));
+
+    const preventa = peliculasFuturas.filter(p => moviesConFunciones.has(p.id));
+    const proximamente = peliculasFuturas.filter(p => !moviesConFunciones.has(p.id));
+
+    this.peliculasPreventa.set(preventa);
+    this.peliculasProximamente.set(proximamente);
   }
 }

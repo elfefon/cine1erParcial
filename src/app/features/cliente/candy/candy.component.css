@@ -196,3 +196,26 @@
   margin-top: 10px;
   padding: 12px;
 }
+
+@media (max-width: 768px) {
+  .candy-container {
+    padding: 20px;
+  }
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+  }
+  .candy-info {
+    padding: 10px;
+  }
+  .candy-info h4 {
+    font-size: 1rem;
+  }
+  .price {
+    font-size: 1.1rem;
+  }
+  .combo-card-special {
+    min-width: 240px;
+    max-width: 240px;
+  }
+}

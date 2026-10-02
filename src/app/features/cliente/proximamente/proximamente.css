@@ -225,3 +225,132 @@
   color: var(--text-main);
   margin-bottom: 24px;
 }
+
+/* PRE-VENTAS HERO SLIDER */
+.preventa-hero-section {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.preventa-hero-header {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+
+.preventa-hero-header h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #60a5fa;
+  text-shadow: 0 2px 10px rgba(96, 165, 250, 0.2);
+}
+
+.preventa-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.preventa-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.preventa-slide {
+  min-width: 100vw;
+  scroll-snap-align: center;
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  display: flex;
+  align-items: flex-end;
+  text-decoration: none;
+}
+
+.preventa-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  z-index: 1;
+}
+
+.preventa-gradient {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  /* Fades completely into the background color --bg-dark (#090d16) at the bottom and sides */
+  background: linear-gradient(to top, var(--bg-dark) 0%, rgba(9, 13, 22, 0.6) 50%, transparent 100%),
+              linear-gradient(to right, var(--bg-dark) 0%, transparent 15%, transparent 85%, var(--bg-dark) 100%);
+}
+
+.preventa-content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.preventa-badge {
+  display: inline-block;
+  background: #10b981;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.preventa-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 10px;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  line-height: 1.1;
+}
+
+.preventa-date {
+  font-size: 1.3rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  margin-bottom: 25px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+.btn-reservar-preventa {
+  display: inline-block;
+  background: var(--primary);
+  color: white;
+  padding: 14px 35px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+}
+
+.preventa-slide:hover .btn-reservar-preventa {
+  background: var(--primary-hover);
+  box-shadow: 0 6px 25px var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .preventa-title {
+    font-size: 2.2rem;
+  }
+  .preventa-slide {
+    height: 50vh;
+  }
+}

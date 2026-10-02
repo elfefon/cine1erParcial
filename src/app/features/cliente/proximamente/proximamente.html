@@ -4,6 +4,32 @@
     <p>¡Prepárate para lo que viene! Agendá estas fechas y sé el primero en tu butaca.</p>
   </div>
 
+  @if (peliculasPreventa().length > 0) {
+    <div class="preventa-hero-section">
+      <div class="preventa-hero-header">
+        <h3>🎟️ Pre-Ventas Activas</h3>
+      </div>
+      
+      <div class="preventa-carousel">
+        @for (p of peliculasPreventa(); track p.id) {
+          <a [routerLink]="['/pelicula', p.id]" class="preventa-slide">
+            <img [src]="p.imagen_url" [alt]="p.nombre" class="preventa-bg">
+            <div class="preventa-gradient"></div>
+            
+            <div class="preventa-content">
+              <span class="preventa-badge">Ya podés reservar</span>
+              <h4 class="preventa-title">{{ p.nombre }}</h4>
+              <p class="preventa-date">Estreno: {{ p.fecha_estreno | date:'dd/MM/yyyy' }}</p>
+              <span class="btn-reservar-preventa">Asegurá tu lugar</span>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+  }
+
   @if (peliculasProximamente().length > 0) {
     <div class="movies-grid">
       @for (p of peliculasProximamente(); track p.id) {
