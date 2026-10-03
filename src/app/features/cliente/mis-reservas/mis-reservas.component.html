@@ -25,44 +25,18 @@
               @if (t.imagen) {
                 <img [src]="t.imagen" [alt]="t.titulo">
               } @else {
-                <div class="placeholder-img">🎬</div>
+                <div class="placeholder-img">🎫</div>
               }
-              <span class="ticket-badge">{{ t.tipo }}</span>
             </div>
 
             <div class="ticket-body">
               <h3 class="ticket-title">{{ t.titulo }}</h3>
-              <p class="ticket-date"><strong>Fecha de compra:</strong> {{ t.fecha_compra | date:'dd/MM/yyyy HH:mm' }}</p>
+              <p class="ticket-date"><strong>Comprado el:</strong> {{ t.fecha_compra | date:'dd/MM/yyyy' }}</p>
               
-              <div class="ticket-details">
-                <p>{{ t.extra }}</p>
-                <p><strong>Total:</strong> ${{ t.total_pagado }}</p>
-                <p><strong>Código de Venta:</strong> <span class="highlight-code">{{ t.codigo_venta }}</span></p>
-              </div>
-
               <div class="ticket-actions">
-                <button class="btn-primary btn-full" (click)="qrDialog.showModal()">🎟️ Ver Código QR</button>
+                <a [routerLink]="['/mis-reservas', t.id]" class="btn-primary btn-full" style="text-align: center; text-decoration: none; display: block;">Ver Detalles</a>
               </div>
             </div>
-
-            <!-- Modal nativo para QR -->
-            <dialog #qrDialog class="qr-dialog">
-              <div class="dialog-content text-center">
-                <h3>Código QR de Ingreso</h3>
-                <p style="margin-bottom: 20px; color: var(--text-muted);">Presentá este código en la entrada o en el Candy.</p>
-                
-                <div class="qr-placeholder">
-                  <!-- Acá podríamos poner angularx-qrcode en el futuro -->
-                  <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + t.qr_codigo" alt="QR Code">
-                </div>
-                
-                <div style="margin-top: 15px; font-family: monospace; background: var(--bg-dark); padding: 10px; border-radius: 8px;">
-                  {{ t.codigo_venta }}
-                </div>
-
-                <button class="btn-outline" style="margin-top: 20px; width: 100%;" (click)="qrDialog.close()">Cerrar</button>
-              </div>
-            </dialog>
 
           </div>
         }

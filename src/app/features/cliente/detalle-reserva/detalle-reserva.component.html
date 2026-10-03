@@ -1,0 +1,101 @@
+<div class="detalle-container">
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando detalles de tu reserva...</p>
+    </div>
+  } @else if (ticket()) {
+    <div class="header">
+      <a routerLink="/mis-reservas" class="btn-back">← Volver a Mis Reservas</a>
+      <h2>Detalle del Ticket</h2>
+      <p class="subtitle">N° {{ ticket().codigo_venta }}</p>
+    </div>
+
+    <div class="detalle-layout">
+      <!-- Columna Izquierda: QR y Resumen general -->
+      <div class="qr-section card-box">
+        <h3>Código de Ingreso</h3>
+        <p class="text-muted">Presentá este código QR en la entrada o en el Candy Bar.</p>
+        
+        <div class="qr-placeholder">
+          <!-- QR falso (imagen generada con API abierta) usando la info real del ticket -->
+          <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + ticket().qr_codigo" alt="Código QR">
+        </div>
+
+        <div class="resumen-ticket">
+          <div class="info-row">
+            <span>Fecha de compra:</span>
+            <strong>{{ ticket().fecha_compra | date:'dd/MM/yyyy HH:mm' }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Total abonado:</span>
+            <strong class="total-price">${{ ticket().total_pagado }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Puntos generados:</span>
+            <strong class="points">⭐ {{ ticket().puntos_generados }} pts</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Lista ítem por ítem -->
+      <div class="items-section">
+        
+        <!-- Tickets de cine -->
+        @if (ticket().seat_reservations && ticket().seat_reservations.length > 0) {
+          <div class="card-box section-box">
+            <h3>🎬 Entradas de Cine</h3>
+            <div class="cine-details">
+              <!-- Asumiendo que todas las butacas de este ticket son para la misma función -->
+              <div class="movie-header">
+                <img [src]="ticket().seat_reservations[0].showtimes.movies.imagen_url" alt="Poster de la película" class="movie-poster">
+                <div class="movie-info">
+                  <h4>{{ ticket().seat_reservations[0].showtimes.movies.nombre }}</h4>
+                  <p><strong>Función:</strong> {{ ticket().seat_reservations[0].showtimes.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</p>
+                  <p><strong>Sala:</strong> {{ ticket().seat_reservations[0].showtimes.rooms.nombre }}</p>
+                </div>
+              </div>
+              
+              <div class="butacas-list">
+                <h4>Butacas Reservadas ({{ticket().seat_reservations.length}})</h4>
+                <ul>
+                  @for (res of ticket().seat_reservations; track res.id) {
+                    <li>
+                      <span>Asiento {{ res.seats?.numero_butaca }} ({{ res.tipo_butaca }})</span>
+                      <strong>${{ res.precio_pagado }}</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Items de Candy Bar -->
+        @if (ticket().ticket_candy_items && ticket().ticket_candy_items.length > 0) {
+          <div class="card-box section-box">
+            <h3>🍿 Productos de Candy Bar</h3>
+            <div class="candy-list">
+              @for (item of ticket().ticket_candy_items; track item.candy_products.nombre) {
+                <div class="candy-item">
+                  <img [src]="item.candy_products.imagen_url" [alt]="item.candy_products.nombre">
+                  <div class="candy-info">
+                    <h4>{{ item.candy_products.nombre }}</h4>
+                    <p>{{ item.cantidad }} x ${{ item.precio_unitario }}</p>
+                  </div>
+                  <strong class="candy-subtotal">${{ item.cantidad * item.precio_unitario }}</strong>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    </div>
+  } @else {
+    <div class="empty-state">
+      <h3>No se encontró la reserva</h3>
+      <a routerLink="/mis-reservas" class="btn-primary">Volver al historial</a>
+    </div>
+  }
+</div>

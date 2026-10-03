@@ -1,12 +1,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-mis-reservas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './mis-reservas.component.html',
   styleUrl: './mis-reservas.component.css'
 })
@@ -53,40 +54,22 @@ export class MisReservasComponent implements OnInit {
       if (error) {
         console.error('Error fetching tickets:', error);
       } else {
-        // Post-procesar para agrupar
+        // Post-procesar para simplificar la tarjeta
         const procesados = (data || []).map((t: any) => {
-          let tipo = 'Desconocido';
-          let titulo = '';
+          const titulo = `Ticket - N° ${t.codigo_venta}`;
           let imagen = '';
-          let extra = '';
 
           const hasMovie = t.seat_reservations && t.seat_reservations.length > 0;
           const hasCandy = t.ticket_candy_items && t.ticket_candy_items.length > 0;
 
-          if (hasMovie && hasCandy) {
-            tipo = 'Película + Candy';
-          } else if (hasMovie) {
-            tipo = 'Película';
-          } else if (hasCandy) {
-            tipo = 'Candy Bar';
-          }
-
+          // Obtener la imagen priorizando la de la peli
           if (hasMovie) {
-            const firstRes = t.seat_reservations[0];
-            const movie = firstRes.showtimes?.movies;
-            titulo = movie?.nombre || 'Película Desconocida';
-            imagen = movie?.imagen_url || '';
-            extra = `Función: ${new Date(firstRes.showtimes?.fecha_hora).toLocaleString()} - ${t.seat_reservations.length} Butaca(s)`;
-          } else if (hasCandy) {
-            titulo = 'Compra en Candy Bar';
-            extra = `${t.ticket_candy_items.length} producto(s)`;
-            // Usamos imagen del primer producto si existe
-            if (t.ticket_candy_items[0].candy_products) {
-              imagen = t.ticket_candy_items[0].candy_products.imagen_url;
-            }
+            imagen = t.seat_reservations[0].showtimes?.movies?.imagen_apaisada_url || t.seat_reservations[0].showtimes?.movies?.imagen_url || '';
+          } else if (hasCandy && t.ticket_candy_items[0].candy_products) {
+            imagen = t.ticket_candy_items[0].candy_products.imagen_url || '';
           }
 
-          return { ...t, tipo, titulo, imagen, extra };
+          return { ...t, titulo, imagen };
         });
 
         this.tickets.set(procesados);
@@ -98,11 +81,5 @@ export class MisReservasComponent implements OnInit {
     }
   }
 
-  parseQR(qrString: string): any {
-    try {
-      return JSON.parse(qrString);
-    } catch {
-      return null;
-    }
-  }
+
 }

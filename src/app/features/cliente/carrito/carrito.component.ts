@@ -39,6 +39,11 @@ export class CarritoComponent {
       return;
     }
 
+    if (this.cart.tickets().length === 0 && this.cart.candy().length > 0) {
+      alert('No podés comprar solo productos del Candy Bar sin una entrada de cine.');
+      return;
+    }
+
     const usuario = this.auth.usuarioActual();
     if (!usuario) {
       this.router.navigate(['/login']);

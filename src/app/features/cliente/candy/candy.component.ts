@@ -81,7 +81,10 @@ export class CandyComponent implements OnInit {
   }
 
   agregar(producto: any) {
+    if (this.cart.tickets().length === 0) {
+      alert('🎟️ ¡Ey! Primero tenés que elegir al menos una entrada de cine antes de pasar por el Candy Bar.');
+      return;
+    }
     this.cart.addCandy(producto, 1);
-    // Podríamos agregar un toast/snackbar aquí
   }
 }
