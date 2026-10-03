@@ -165,6 +165,18 @@ export class SupabaseService {
   // importación de peliculas por nombre
   public async buscarEImportarPeliculaPorNombre(nombre: string) {
     try {
+      // 1. Verificar si ya existe localmente
+      const { data: existentes, error: errLocal } = await this._supabase
+        .from('movies')
+        .select('*')
+        .ilike('nombre', nombre.trim());
+        
+      if (existentes && existentes.length > 0) {
+        // Retornamos la local para no duplicar
+        return existentes[0];
+      }
+
+      // 2. Si no existe, buscamos en TMDB
       const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${environment.tmbd_key}&language=es-ES&query=${encodeURIComponent(nombre)}`;
       const searchResponse = await fetch(searchUrl);
       if (!searchResponse.ok) throw new Error(`Error de TMDB al buscar: ${searchResponse.status}`);
