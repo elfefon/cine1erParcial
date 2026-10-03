@@ -20,17 +20,13 @@ export class GpCrearFuncionComponent implements OnInit {
   funcionForm = this.fb.nonNullable.group({
     pelicula_id: ['', Validators.required],
     horario: ['', Validators.required],
-    sala_id: ['', Validators.required],
     idioma: ['', Validators.required],
     precio: [0, [Validators.required, Validators.min(0)]],
-    formato: [{ value: '', disabled: true }]
+    // formato ya no depende de la sala antes de crear, o tal vez sí si asumimos un formato estándar.
+    // Lo dejaremos por defecto en 2D o según la sala asignada al final.
   });
 
   ngOnInit() {
-    this.funcionForm.get('sala_id')?.valueChanges.subscribe(sId => {
-      const s = this.state.salas().find(x => x.id === sId);
-      if (s) this.funcionForm.patchValue({ formato: s.dimension || '2D' });
-    });
   }
 
   onPelicula(id: string) { this.funcionForm.patchValue({ pelicula_id: id }); }
@@ -69,19 +65,39 @@ export class GpCrearFuncionComponent implements OnInit {
       }
       
       const fin = inicio + ((pelicula?.duracion_min || 120) * 60000);
-      const enSala = this.state.funciones().filter(x => x.room_id === f.sala_id);
       
-      for (const ex of enSala) {
-        const exIni = new Date(ex.fecha_hora).getTime();
-        const exFin = exIni + ((ex.movies?.duracion_min || 120) * 60000);
-        if (inicio < (exFin + 1800000) && exIni < (fin + 1800000)) {
-          alert('Error: Choca con otra función o no respeta 30 min.'); return;
+      // Asignación automática de sala
+      let salaAsignadaId: string | null = null;
+      let salaFormato: string = '2D';
+
+      for (const sala of this.state.salas()) {
+        const enEstaSala = this.state.funciones().filter(x => x.room_id === sala.id);
+        let choca = false;
+
+        for (const ex of enEstaSala) {
+          const exIni = new Date(ex.fecha_hora).getTime();
+          const exFin = exIni + ((ex.movies?.duracion_min || 120) * 60000);
+          if (inicio < (exFin + 1800000) && exIni < (fin + 1800000)) {
+            choca = true;
+            break;
+          }
+        }
+
+        if (!choca) {
+          salaAsignadaId = sala.id;
+          salaFormato = sala.dimension || '2D';
+          break; // Encontramos una sala libre
         }
       }
       
+      if (!salaAsignadaId) {
+        alert('Error: No hay salas disponibles en este horario (choca con otra función o no respeta los 30 min de limpieza). Por favor, elegí otro horario.');
+        return;
+      }
+      
       await this.supabase.insertData('showtimes', {
-        movie_id: f.pelicula_id, room_id: f.sala_id, fecha_hora: f.horario,
-        idioma: f.idioma, precio_base: f.precio, formato: f.formato
+        movie_id: f.pelicula_id, room_id: salaAsignadaId, fecha_hora: f.horario,
+        idioma: f.idioma, precio_base: f.precio, formato: salaFormato
       });
       await this.state.cargarFunciones();
       await this.state.registrarAccion('CREATE_SHOWTIME');
