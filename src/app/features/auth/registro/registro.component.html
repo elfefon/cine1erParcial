@@ -17,36 +17,85 @@
       <div class="form-group">
         <label for="nombre">Nombre Completo</label>
         <input id="nombre" type="text" placeholder="Juan Pérez" formControlName="nombre">
+        @if (registroForm.controls.nombre.touched && registroForm.controls.nombre.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
+            El nombre es requerido, máximo 50 letras y sin números.
+          </small>
+        }
       </div>
 
       <div class="form-group">
         <label for="email">Email</label>
         <input id="email" type="email" placeholder="ejemplo@correo.com" formControlName="email">
+        @if (registroForm.controls.email.touched && registroForm.controls.email.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
+            Por favor, ingresá un correo válido.
+          </small>
+        }
       </div>
       
       <div class="form-group">
         <label for="password">Contraseña (Mínimo 6 caracteres)</label>
         <input id="password" type="password" placeholder="••••••••" formControlName="password">
+        @if (registroForm.controls.password.touched && registroForm.controls.password.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
+            La contraseña debe tener entre 6 y 30 caracteres.
+          </small>
+        }
       </div>
       
       <div class="form-group">
-        <label for="fechaNacimiento">Fecha de Nacimiento</label>
+        <label for="fechaNacimiento">Fecha de Nacimiento (10 a 100 años)</label>
         <input id="fechaNacimiento" type="date" formControlName="fecha_nacimiento">
+        @if (registroForm.controls.fecha_nacimiento.touched && registroForm.controls.fecha_nacimiento.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
+            Tenés que tener entre 10 y 100 años para poder registrarte.
+          </small>
+        }
       </div>
       
       <div class="form-group">
         <label for="tipoSangre">Tipo de Sangre</label>
-        <input id="tipoSangre" type="text" placeholder="A+" formControlName="tipo_sangre">
+        <select id="tipoSangre" formControlName="tipo_sangre" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+          <option value="">Seleccioná tu tipo de sangre</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+        @if (registroForm.controls.tipo_sangre.touched && registroForm.controls.tipo_sangre.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">Requerido.</small>
+        }
       </div>
       
       <div class="form-group">
         <label for="colorOjos">Color de Ojos</label>
-        <input id="colorOjos" type="text" placeholder="Azul" formControlName="color_ojos">
+        <select id="colorOjos" formControlName="color_ojos" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+          <option value="">Seleccioná un color</option>
+          <option value="Marrón">Marrón</option>
+          <option value="Azul">Azul</option>
+          <option value="Verde">Verde</option>
+          <option value="Avellana">Avellana</option>
+          <option value="Gris">Gris</option>
+          <option value="Otro">Otro</option>
+        </select>
+        @if (registroForm.controls.color_ojos.touched && registroForm.controls.color_ojos.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">Requerido.</small>
+        }
       </div>
       
       <div class="form-group">
-        <label for="vacacionesAnuales">Vacaciones Anuales</label>
+        <label for="vacacionesAnuales">Vacaciones Anuales (0 a 365)</label>
         <input id="vacacionesAnuales" type="number" placeholder="20" formControlName="vacaciones_anuales">
+        @if (registroForm.controls.vacaciones_anuales.touched && registroForm.controls.vacaciones_anuales.invalid) {
+          <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
+            Debe ser un número entre 0 y 365.
+          </small>
+        }
       </div>
       
       <button type="submit" class="btn-submit" [disabled]="registroForm.invalid">Registrarse</button>
