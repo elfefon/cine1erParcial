@@ -20,6 +20,7 @@ import { HomeComponent } from './features/admin/home/home.component';
 import { CuponesComponent } from './features/admin/cupones/cupones.component';
 
 import { ProximamenteComponent } from './features/cliente/proximamente/proximamente';
+import { MisReservasComponent } from './features/cliente/mis-reservas/mis-reservas.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -49,6 +50,7 @@ export const routes: Routes = [
       { path: 'reserva/:id', component: ReservaButacasComponent },
       { path: 'candy', component: CandyComponent },
       { path: 'carrito', component: CarritoComponent },
+      { path: 'mis-reservas', component: MisReservasComponent, canActivate: [authGuard] },
       { path: 'perfil', component: PerfilUsuarioComponent }
     ]
   },
