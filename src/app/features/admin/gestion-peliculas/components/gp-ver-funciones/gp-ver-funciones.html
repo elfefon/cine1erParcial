@@ -1,0 +1,33 @@
+<div class="table-card">
+  <h3>Funciones Programadas</h3>
+  <input type="text" class="search-bar" placeholder="Buscar por película o sala..." (input)="onBuscar($event)">
+  <table class="data-table">
+    <thead><tr><th>Película</th><th>Duración</th><th>Horario</th><th>Sala</th><th>Idioma</th><th>Formato</th><th>Acciones</th></tr></thead>
+    <tbody>
+      @for (f of filtradas(); track f.id) {
+        <tr>
+          <td style="font-weight: 700;">{{ f.movies?.nombre }}</td>
+          <td>{{ f.movies?.duracion_min || 'N/A' }} min</td>
+          <td>{{ f.fecha_hora | date:'short' }}</td>
+          <td>{{ f.rooms?.nombre }}</td>
+          <td>{{ f.idioma }}</td>
+          <td>{{ f.rooms?.dimension }}</td>
+          <td><button class="btn-modificar" (click)="funcionEdit.set(f)">Modificar</button></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="7" style="text-align: center; padding: 30px;">No se encontraron funciones.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (funcionEdit()) {
+  <app-modificar-funcion
+    [funcion]="funcionEdit()"
+    [peliculas]="state.peliculas()"
+    [salas]="state.salas()"
+    [funciones]="state.funciones()"
+    (close)="funcionEdit.set(null)"
+    (saved)="onSaved()">
+  </app-modificar-funcion>
+}

@@ -1,0 +1,32 @@
+<div class="form-card">
+  <h3>Nueva Función</h3>
+  <form [formGroup]="funcionForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Película</label>
+        <app-buscador-autocomplete
+          listId="lista-general"
+          placeholder="🔍 Escribe para buscar una película..."
+          [opciones]="state.opcionesGenerales()"
+          [seleccionId]="funcionForm.value.pelicula_id || ''"
+          (seleccionChange)="onPelicula($event)">
+        </app-buscador-autocomplete>
+      </div>
+      <div class="form-group"><label>Horario</label><input type="datetime-local" formControlName="horario"></div>
+      <div class="form-group">
+        <label>Sala</label>
+        <select formControlName="sala_id">
+          <option value="">Seleccione...</option>
+          @for (s of state.salas(); track s.id) { <option [value]="s.id">{{ s.nombre }}</option> }
+        </select>
+      </div>
+      <div class="form-group"><label>Formato</label><input type="text" formControlName="formato"></div>
+      <div class="form-group">
+        <label>Idioma</label>
+        <select formControlName="idioma"><option value="">Seleccione...</option><option value="Castellano">Castellano</option><option value="Subtitulada">Subtitulada</option></select>
+      </div>
+      <div class="form-group"><label>Precio</label><input type="number" formControlName="precio"></div>
+    </div>
+    <button type="submit" class="btn-save" [disabled]="funcionForm.invalid">💾 Guardar Función</button>
+  </form>
+</div>

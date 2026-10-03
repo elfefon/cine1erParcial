@@ -1,0 +1,54 @@
+<div class="page-header">
+  <h2>Gestión de Películas</h2>
+  <p>Agregá nuevas películas a la cartelera y administrá el catálogo</p>
+</div>
+
+<div class="form-card" style="margin-bottom: 30px;">
+  <h3>Opción 1: Buscar en BD de TMDB (Automático)</h3>
+  <div style="display: flex; gap: 10px; margin-top: 15px;">
+    <input type="text" class="search-bar" style="margin-bottom: 0; flex: 1;" placeholder="Nombre en TMDB..."
+           [value]="tmdbNombreInput()" (input)="tmdbNombreInput.set($any($event.target).value)" (keydown.enter)="importarDesdeTMDB()">
+    <button class="btn-save" style="margin-top: 0;" (click)="importarDesdeTMDB()">Buscar e Importar</button>
+  </div>
+</div>
+
+<div class="form-card">
+  <h3>Opción 2: Crear Manualmente</h3>
+  <form [formGroup]="peliculaForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Título de la película</label>
+        <input type="text" formControlName="nombre">
+      </div>
+      <div class="form-group">
+        <label>URL del Póster</label>
+        <input type="text" formControlName="imagen_url">
+      </div>
+      <div class="form-group full-width">
+        <label>Sinopsis</label>
+        <textarea rows="3" formControlName="sinopsis"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Duración (Minutos)</label>
+        <input type="number" formControlName="duracion_min">
+      </div>
+      <div class="form-group">
+        <label>Restricción de Edad (+)</label>
+        <input type="number" formControlName="restriccion_edad">
+      </div>
+      <div class="form-group">
+        <label>Géneros</label>
+        <input type="text" placeholder="Ej. Acción, Ciencia Ficción" formControlName="generos">
+      </div>
+      <div class="form-group">
+        <label>Estreno (Opcional)</label>
+        <input type="date" formControlName="fecha_estreno">
+      </div>
+      <div class="form-group full-width checkbox-group">
+        <input type="checkbox" id="activa" formControlName="activa">
+        <label for="activa">Película activa en cartelera</label>
+      </div>
+    </div>
+    <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid">💾 Guardar Película</button>
+  </form>
+</div>

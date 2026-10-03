@@ -8,6 +8,15 @@ import { HistorialAccionesComponent } from './features/admin/historial-acciones/
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 
+// Subrutas Gestion Peliculas
+import { GpMenuComponent } from './features/admin/gestion-peliculas/components/gp-menu/gp-menu';
+import { GpCrearPeliculaComponent } from './features/admin/gestion-peliculas/components/gp-crear-pelicula/gp-crear-pelicula';
+import { GpVerPeliculasComponent } from './features/admin/gestion-peliculas/components/gp-ver-peliculas/gp-ver-peliculas';
+import { GpRecomendacionesComponent } from './features/admin/gestion-peliculas/components/gp-recomendaciones/gp-recomendaciones';
+import { GpProximamenteComponent } from './features/admin/gestion-peliculas/components/gp-proximamente/gp-proximamente';
+import { GpCrearFuncionComponent } from './features/admin/gestion-peliculas/components/gp-crear-funcion/gp-crear-funcion';
+import { GpVerFuncionesComponent } from './features/admin/gestion-peliculas/components/gp-ver-funciones/gp-ver-funciones';
+
 import { LayoutClienteComponent } from './features/cliente/layout-cliente/layout-cliente.component';
 import { CarteleraComponent } from './features/cliente/cartelera/cartelera.component';
 import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
@@ -34,7 +43,20 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
-      { path: 'peliculas', component: GestionPeliculasComponent },
+      { 
+        path: 'peliculas', 
+        component: GestionPeliculasComponent,
+        children: [
+          { path: '', redirectTo: 'menu', pathMatch: 'full' },
+          { path: 'menu', component: GpMenuComponent },
+          { path: 'crear-pelicula', component: GpCrearPeliculaComponent },
+          { path: 'ver-peliculas', component: GpVerPeliculasComponent },
+          { path: 'recomendaciones', component: GpRecomendacionesComponent },
+          { path: 'proximamente', component: GpProximamenteComponent },
+          { path: 'crear-funcion', component: GpCrearFuncionComponent },
+          { path: 'ver-funciones', component: GpVerFuncionesComponent }
+        ]
+      },
       { path: 'combos', component: GestionCombosComponent },
       { path: 'historial', component: HistorialAccionesComponent },
       { path: 'cupones', component: CuponesComponent }
