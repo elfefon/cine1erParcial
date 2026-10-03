@@ -43,7 +43,6 @@ export class CuponesComponent implements OnInit {
 
   async ngOnInit() {
     await this.cargarCupones();
-    await this.asegurarCuponesPorDefecto();
   }
 
   async cargarCupones() {
@@ -59,40 +58,6 @@ export class CuponesComponent implements OnInit {
       console.error('Error fetching coupons', error);
     }
     this.loading.set(false);
-  }
-
-  async asegurarCuponesPorDefecto() {
-    // Si no hay cupones, podríamos crearlos, pero mejor buscamos si existen por código
-    const primeraCompra = this.cupones().find(c => c.codigo === 'BIENVENIDA');
-    const mayores65 = this.cupones().find(c => c.codigo === 'MAYORES65');
-
-    let reload = false;
-
-    if (!primeraCompra) {
-      await this.supabase.client.from('coupons').insert({
-        codigo: 'BIENVENIDA',
-        porcentaje_descuento: 20,
-        es_primera_compra: true,
-        edad_minima: 0,
-        activo: true
-      });
-      reload = true;
-    }
-
-    if (!mayores65) {
-      await this.supabase.client.from('coupons').insert({
-        codigo: 'MAYORES65',
-        porcentaje_descuento: 30,
-        es_primera_compra: false,
-        edad_minima: 65,
-        activo: true
-      });
-      reload = true;
-    }
-
-    if (reload) {
-      await this.cargarCupones();
-    }
   }
 
   abrirCrear() {
