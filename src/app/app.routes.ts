@@ -39,6 +39,8 @@ import { ProximamenteComponent } from './features/cliente/proximamente/proximame
 import { MisReservasComponent } from './features/cliente/mis-reservas/mis-reservas.component';
 import { DetalleReservaComponent } from './features/cliente/detalle-reserva/detalle-reserva.component';
 
+import { ScannerComponent } from './features/empleado/scanner/scanner';
+
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
@@ -95,6 +97,10 @@ export const routes: Routes = [
       { path: 'mis-reservas/:id', component: DetalleReservaComponent, canActivate: [authGuard] },
       { path: 'perfil', component: PerfilUsuarioComponent }
     ]
+  },
+  {
+    path: 'empleado/scanner',
+    component: ScannerComponent
   },
   { path: '**', redirectTo: 'cartelera' }
 ];

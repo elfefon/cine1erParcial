@@ -1,0 +1,43 @@
+<div class="scanner-container">
+  <div class="scanner-header">
+    <h2>📱 Scanner de Accesos</h2>
+    <p>Simulador de lectura QR para empleados.</p>
+  </div>
+
+  <div class="input-group">
+    <input 
+      type="text" 
+      [(ngModel)]="codigo" 
+      placeholder="Ingrese código (ej: TKT-123456-ABC)"
+      (keyup.enter)="escanear()">
+    <button (click)="escanear()" [disabled]="loading() || !codigo().trim()">
+      {{ loading() ? 'Validando...' : 'Escanear' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error">
+      {{ error() }}
+    </div>
+  }
+
+  @if (resultado()) {
+    <div class="alert alert-success">
+      {{ resultado().mensaje }}
+    </div>
+
+    <div class="ticket-info">
+      <h4>Detalles del Ticket</h4>
+      <p><strong>N°:</strong> {{ resultado().detalles.codigo_venta }}</p>
+      
+      @if (resultado().detalles.seat_reservations?.length > 0) {
+        <p><strong>Película:</strong> {{ resultado().detalles.seat_reservations[0].showtimes.movies.nombre }}</p>
+        <p><strong>Horario:</strong> {{ resultado().detalles.seat_reservations[0].showtimes.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</p>
+        <p><strong>Butacas:</strong> 
+          {{ resultado().detalles.seat_reservations.length }} 
+          (@for(b of resultado().detalles.seat_reservations; track b.id){ {{b.seats?.numero_butaca || 'X'}} } )
+        </p>
+      }
+    </div>
+  }
+</div>
