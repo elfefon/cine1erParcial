@@ -3,14 +3,91 @@
     <h2>👤 Perfil de Usuario</h2>
     <p style="color: var(--text-muted); margin-bottom: 25px;">Hola, {{ authService.usuarioActual()?.nombre }}!</p>
 
-    <div style="background: var(--bg-dark); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 20px; margin-bottom: 30px; text-align: center;">
-      <span style="display: block; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px;">Tus puntos actuales</span>
-      <strong style="font-size: 3rem; color: var(--accent-gold); display: block;">⭐ {{ authService.usuarioActual()?.puntos || 0 }}</strong>
-      <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Aprovechalos para canjear entradas y combos.</span>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+      <div style="background: var(--bg-dark); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 20px; text-align: center;">
+        <span style="display: block; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px;">Puntos de Fidelización</span>
+        <strong style="font-size: 3rem; color: var(--accent-gold); display: block;">⭐ {{ authService.usuarioActual()?.puntos || 0 }}</strong>
+        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Aprovechalos para canjear entradas y combos.</span>
+      </div>
+
+      <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center;">
+        <span style="display: block; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px;">Saldo a Favor (Devoluciones)</span>
+        <strong style="font-size: 3rem; color: #10b981; display: block;">${{ authService.usuarioActual()?.credito_saldo || 0 }}</strong>
+        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Se aplicará automáticamente en tu próxima compra.</span>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Mis Películas (Historial)</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+      @for (peli of peliculasVistas(); track peli.id) {
+        <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+          <img [src]="peli.imagen_url || peli.imagen_apaisada_url" style="width: 100%; height: 250px; object-fit: cover;" alt="Póster">
+          <div style="padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <strong style="font-size: 1.1rem; display: block; margin-bottom: 10px;">{{ peli.nombre }}</strong>
+            <button style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; transition: 0.2s;" (click)="abrirCalificacion(peli)">
+              Calificar ⭐
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <p style="color: var(--text-muted); grid-column: 1/-1;">Aún no has visto ninguna película. ¡Comprá tus entradas y empezá a llenar tu historial!</p>
+      }
     </div>
 
     <div class="perfil-actions">
+      @if (authService.usuarioActual()?.rol === 'admin') {
+        <button style="padding: 10px 20px; background: var(--accent-gold); color: var(--bg-dark); border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">
+          ⚙️ Panel de Administrador
+        </button>
+      }
       <button class="btn-logout" (click)="logout()">🚪 Cerrar Sesión</button>
     </div>
   </div>
 </div>
+
+<!-- Modal para Calificar Película -->
+@if (peliculaACalificar()) {
+  <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-content" style="background: var(--bg-card); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; border: 1px solid var(--border-color);">
+      <h3 style="margin-bottom: 20px; font-size: 1.5rem; color: var(--primary);">Calificar: {{ peliculaACalificar().nombre }}</h3>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">Puntuación (1-5)</label>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;">
+          @for (star of [1,2,3,4,5]; track star) {
+            <span 
+              (click)="calificacionValue.set(star)" 
+              style="font-size: 2rem; cursor: pointer; transition: 0.2s;"
+              [style.color]="star <= calificacionValue() ? 'var(--accent-gold)' : 'var(--text-muted)'">
+              ★
+            </span>
+          }
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 10px; color: var(--text-muted);">Comentario (Opcional)</label>
+        <textarea 
+          [(ngModel)]="comentarioValue" 
+          rows="4" 
+          placeholder="¿Qué te pareció la película?"
+          style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: white; resize: vertical;">
+        </textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button 
+          (click)="cerrarCalificacion()" 
+          style="padding: 10px 20px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 6px; cursor: pointer;">
+          Cancelar
+        </button>
+        <button 
+          (click)="enviarCalificacion()" 
+          [disabled]="enviandoResena()"
+          style="padding: 10px 20px; background: var(--primary); border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">
+          {{ enviandoResena() ? 'Enviando...' : 'Enviar Reseña' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
