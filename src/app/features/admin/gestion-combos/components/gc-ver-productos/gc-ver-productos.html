@@ -1,0 +1,42 @@
+<div class="table-card">
+  <h3>Productos Disponibles</h3>
+  <input type="text" class="search-bar" placeholder="Buscar producto..." (input)="onBuscar($event)">
+  <table class="data-table">
+    <thead><tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Puntos</th><th>Acciones</th></tr></thead>
+    <tbody>
+      @for (p of filtrados(); track p.id) {
+        <tr>
+          <td style="font-weight: 700;">{{ p.nombre }}</td>
+          <td><span class="badge">{{ p.categoria }}</span></td>
+          <td><span class="price-tag">${{ p.precio }}</span></td>
+          <td>{{ p.costo_puntos }} pts</td>
+          <td><button class="btn-modificar" (click)="abrirModificar(p)">Modificar</button></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No hay productos registrados aún.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (productoEditando()) {
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Modificar Producto</h3>
+        <button class="btn-close" (click)="cerrarModificar()">✕</button>
+      </div>
+      <form [formGroup]="productoEditForm" (ngSubmit)="guardarModificacion()">
+        <div class="form-grid">
+          <div class="form-group full-width"><label>Nombre</label><input type="text" formControlName="nombre"></div>
+          <div class="form-group"><label>Categoría</label>
+            <select formControlName="categoria"><option value="Comida">Comida</option><option value="Bebida">Bebida</option><option value="Golosina">Golosina</option></select>
+          </div>
+          <div class="form-group"><label>Precio</label><input type="number" formControlName="precio"></div>
+          <div class="form-group full-width"><label>URL Imagen</label><input type="text" formControlName="imagen_url"></div>
+        </div>
+        <div class="modal-actions"><button type="submit" class="btn-save" [disabled]="productoEditForm.invalid">Guardar Cambios</button></div>
+      </form>
+    </div>
+  </div>
+}

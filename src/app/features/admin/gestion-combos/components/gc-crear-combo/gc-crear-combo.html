@@ -1,0 +1,32 @@
+<div class="form-card">
+  <h3>Armar Nuevo Combo</h3>
+  <form [formGroup]="comboForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre del Combo</label><input type="text" formControlName="nombre"></div>
+      <div class="form-group"><label>Precio de Venta ($)</label><input type="number" formControlName="precio"></div>
+    </div>
+
+    <div class="combo-builder-grid">
+      <div class="cb-panel">
+        <h4>Buscar Productos</h4>
+        <input type="text" class="search-bar" placeholder="Ej. Pochoclos..." (input)="onBuscar($event)">
+        <div class="cb-list">
+          @for (p of disponibles(); track p.id) {
+            <div class="cb-item" (click)="agregar(p)"><span>{{ p.nombre }}</span><span class="btn-add-mini">+</span></div>
+          }
+        </div>
+      </div>
+      <div class="cb-panel cb-selected">
+        <h4>Contenido del Combo ({{ productosSeleccionados().length }})</h4>
+        <div class="cb-list">
+          @for (ps of productosSeleccionados(); track $index) {
+            <div class="cb-item"><span>{{ ps.nombre }}</span><span class="btn-remove-mini" (click)="quitar($index)">✕</span></div>
+          } @empty {
+            <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;">Combo vacío. Agregá productos.</div>
+          }
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn-save" [disabled]="comboForm.invalid || productosSeleccionados().length === 0">💾 Guardar Combo</button>
+  </form>
+</div>

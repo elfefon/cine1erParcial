@@ -17,6 +17,13 @@ import { GpProximamenteComponent } from './features/admin/gestion-peliculas/comp
 import { GpCrearFuncionComponent } from './features/admin/gestion-peliculas/components/gp-crear-funcion/gp-crear-funcion';
 import { GpVerFuncionesComponent } from './features/admin/gestion-peliculas/components/gp-ver-funciones/gp-ver-funciones';
 
+// Subrutas Gestion Combos
+import { GcMenuComponent } from './features/admin/gestion-combos/components/gc-menu/gc-menu';
+import { GcCrearProductoComponent } from './features/admin/gestion-combos/components/gc-crear-producto/gc-crear-producto';
+import { GcVerProductosComponent } from './features/admin/gestion-combos/components/gc-ver-productos/gc-ver-productos';
+import { GcCrearComboComponent } from './features/admin/gestion-combos/components/gc-crear-combo/gc-crear-combo';
+import { GcVerCombosComponent } from './features/admin/gestion-combos/components/gc-ver-combos/gc-ver-combos';
+
 import { LayoutClienteComponent } from './features/cliente/layout-cliente/layout-cliente.component';
 import { CarteleraComponent } from './features/cliente/cartelera/cartelera.component';
 import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
@@ -57,7 +64,18 @@ export const routes: Routes = [
           { path: 'ver-funciones', component: GpVerFuncionesComponent }
         ]
       },
-      { path: 'combos', component: GestionCombosComponent },
+      { 
+        path: 'combos', 
+        component: GestionCombosComponent,
+        children: [
+          { path: '', redirectTo: 'menu', pathMatch: 'full' },
+          { path: 'menu', component: GcMenuComponent },
+          { path: 'crear-producto', component: GcCrearProductoComponent },
+          { path: 'ver-productos', component: GcVerProductosComponent },
+          { path: 'crear-combo', component: GcCrearComboComponent },
+          { path: 'ver-combos', component: GcVerCombosComponent }
+        ]
+      },
       { path: 'historial', component: HistorialAccionesComponent },
       { path: 'cupones', component: CuponesComponent }
     ]

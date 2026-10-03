@@ -1,0 +1,19 @@
+<div class="form-card">
+  <h3>Nuevo Producto Individual</h3>
+  <form [formGroup]="productoForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre del Producto</label><input type="text" formControlName="nombre"></div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select formControlName="categoria">
+          <option value="Comida">Comida (Popcorn, Nachos, etc)</option>
+          <option value="Bebida">Bebida</option>
+          <option value="Golosina">Golosina</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Precio de Venta ($)</label><input type="number" formControlName="precio"></div>
+      <div class="form-group"><label>URL de Imagen</label><input type="text" formControlName="imagen_url"></div>
+    </div>
+    <button type="submit" class="btn-save" [disabled]="productoForm.invalid">💾 Guardar Producto</button>
+  </form>
+</div>
