@@ -6,6 +6,7 @@
 
 .navbar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 16px 40px;
   background: rgba(19, 27, 46, 0.85);
@@ -16,20 +17,13 @@
   z-index: 100;
 }
 
-.navbar-header {
+.nav-left, .nav-right {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 1.5rem;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  margin-right: 40px;
-}
+
 
 .brand-icon {
   font-size: 1.8rem;
@@ -60,19 +54,7 @@
   cursor: pointer;
 }
 
-.nav-container {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav-links a {
+.nav-left a, .nav-right a {
   color: var(--text-muted);
   text-decoration: none;
   font-weight: 600;
@@ -82,33 +64,20 @@
   transition: var(--transition);
 }
 
-.nav-links a:hover,
-.nav-links a.active {
+.nav-left a:hover,
+.nav-left a.active,
+.nav-right a:hover,
+.nav-right a.active {
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.06);
 }
 
-.user-actions {
+.brand {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-left: auto;
-}
-
-.user-actions a {
-  color: var(--text-muted);
+  gap: 10px;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  transition: var(--transition);
-}
-
-.user-actions a:hover,
-.user-actions a.active {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.06);
+  margin-right: 10px; /* Reducido porque ya hay gap 1.5rem */
 }
 
 .cart-btn {
@@ -174,45 +143,14 @@
 @media (max-width: 768px) {
   .navbar {
     padding: 14px 20px;
-    flex-direction: column;
-    gap: 0;
   }
-  .navbar-header {
-    width: 100%;
-    margin-bottom: 0;
-  }
-  .brand {
-    margin-right: 0;
+  .nav-left, .nav-right {
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .mobile-toggle {
-    display: block;
-  }
-  .nav-container {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    padding-top: 20px;
-    gap: 20px;
-    animation: fadeIn 0.3s ease-out;
-  }
-  .nav-container.open {
-    display: flex;
-  }
-  .nav-links {
-    flex-direction: column;
-    width: 100%;
-    gap: 10px;
-  }
-  .nav-links a {
-    width: 100%;
-    text-align: center;
-  }
-  .user-actions {
-    margin-left: 0;
-    justify-content: center;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: none; /* Podrías necesitar readaptarlo para mobile si querés un menú hamburguesa real con este layout */
   }
 }
 

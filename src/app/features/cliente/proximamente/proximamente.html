@@ -46,7 +46,12 @@
               Estreno: {{ p.fecha_estreno | date:'dd/MM/yyyy' }}
             </p>
             <p class="card-sinopsis">{{ p.sinopsis | slice:0:110 }}...</p>
-            <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <a [routerLink]="['/pelicula', p.id]" class="btn-details">Ver Detalles</a>
+              <button class="btn-details" style="background: transparent; color: #3b82f6; border: 1px solid #3b82f6;" (click)="activarAlerta(p)">
+                🔔 Activar Alerta
+              </button>
+            </div>
           </div>
         </div>
       }

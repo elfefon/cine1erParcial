@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -13,6 +14,7 @@ import { Pelicula } from '../../../models/pelicula.interface';
 })
 export class ProximamenteComponent implements OnInit {
   private supabase = inject(SupabaseService);
+  private auth = inject(AuthService);
   peliculasProximamente = signal<Pelicula[]>([]);
   peliculasPreventa = signal<Pelicula[]>([]);
 
@@ -32,5 +34,24 @@ export class ProximamenteComponent implements OnInit {
 
     this.peliculasPreventa.set(preventa);
     this.peliculasProximamente.set(proximamente);
+  }
+
+  async activarAlerta(p: Pelicula) {
+    const user = this.auth.usuarioActual();
+    if (!user) {
+      alert('Debes iniciar sesión para activar la alerta.');
+      return;
+    }
+    try {
+      const payload = {
+        movie_id: p.id,
+        user_id: user.id
+      };
+      const { error } = await this.supabase.client.from('movie_subscriptions').upsert(payload, { onConflict: 'movie_id, user_id' });
+      if (error) throw error;
+      alert(`¡Listo! Te avisaremos cuando abran las preventas para "${p.nombre}".`);
+    } catch (e: any) {
+      alert('Error al activar alerta: ' + (e.message || 'Error desconocido'));
+    }
   }
 }
