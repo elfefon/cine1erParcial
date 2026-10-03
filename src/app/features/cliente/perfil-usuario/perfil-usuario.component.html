@@ -1,7 +1,13 @@
 <div class="perfil-container">
   <div class="perfil-card">
     <h2>👤 Perfil de Usuario</h2>
-    <p>Ajustes de cuenta e inicio de sesión.</p>
+    <p style="color: var(--text-muted); margin-bottom: 25px;">Hola, {{ authService.usuarioActual()?.nombre }}!</p>
+
+    <div style="background: var(--bg-dark); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 20px; margin-bottom: 30px; text-align: center;">
+      <span style="display: block; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px;">Tus puntos actuales</span>
+      <strong style="font-size: 3rem; color: var(--accent-gold); display: block;">⭐ {{ authService.usuarioActual()?.puntos || 0 }}</strong>
+      <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Aprovechalos para canjear entradas y combos.</span>
+    </div>
 
     <div class="perfil-actions">
       <button class="btn-logout" (click)="logout()">🚪 Cerrar Sesión</button>

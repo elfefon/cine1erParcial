@@ -50,18 +50,31 @@ export class CarritoComponent {
       return;
     }
 
+    const total = this.cart.totalGeneral();
+    const puntosUsuario = usuario.puntos || 0;
+    let usaPuntos = false;
+
+    if (puntosUsuario >= total) {
+      usaPuntos = confirm(`🎁 ¡Tenés ${puntosUsuario} puntos acumulados! ¿Querés usarlos para pagar el total de tu compra ($${total})?`);
+    }
+
     this.loading.set(true);
 
     try {
       const tickets = this.cart.tickets();
       let mainTicketId: string | null = null;
+      let totalPuntosAGenerar = 0;
       
       // Proceso tickets de cine
       for (let i = 0; i < tickets.length; i++) {
         const t = tickets[i];
         const randomCode = Math.random().toString(36).substring(2, 9).toUpperCase();
         const codigoVenta = `TKT-${Date.now()}-${randomCode}`;
-        const totalParaTicket = t.precioTotal + (i === 0 ? this.cart.totalCandy() : 0);
+        
+        const subtotalTicket = t.precioTotal + (i === 0 ? this.cart.totalCandy() : 0);
+        const totalParaTicket = usaPuntos ? 0 : subtotalTicket;
+        const puntosTicket = usaPuntos ? 0 : Math.floor(subtotalTicket / 5);
+        totalPuntosAGenerar += puntosTicket;
 
         const qrData = JSON.stringify({
           codigo: codigoVenta,
@@ -74,7 +87,7 @@ export class CarritoComponent {
         const payloadTicket = {
           user_id: usuario.id,
           total_pagado: totalParaTicket,
-          puntos_generados: Math.floor(totalParaTicket / 5),
+          puntos_generados: puntosTicket,
           codigo_venta: codigoVenta,
           qr_codigo: qrData,
           estado: 'valido',
@@ -117,10 +130,15 @@ export class CarritoComponent {
             is_candy_only: true
           });
 
+          const subtotalCandy = this.cart.totalCandy();
+          const totalCandyPagado = usaPuntos ? 0 : subtotalCandy;
+          const puntosCandy = usaPuntos ? 0 : Math.floor(subtotalCandy / 5);
+          totalPuntosAGenerar += puntosCandy;
+
           const payloadTicket = {
             user_id: usuario.id,
-            total_pagado: this.cart.totalCandy(),
-            puntos_generados: Math.floor(this.cart.totalCandy() / 5),
+            total_pagado: totalCandyPagado,
+            puntos_generados: puntosCandy,
             codigo_venta: codigoVenta,
             qr_codigo: qrData,
             estado: 'valido',
@@ -141,6 +159,17 @@ export class CarritoComponent {
         await this.supabase.client.from('ticket_candy_items').insert(candyPayload);
       }
       
+      // Actualizar puntos del usuario en Supabase y localmente
+      if (usaPuntos) {
+        const nuevosPuntos = puntosUsuario - total;
+        await this.supabase.client.from('profiles').update({ puntos: nuevosPuntos }).eq('id', usuario.id);
+        this.auth.usuarioActual.update(u => u ? { ...u, puntos: nuevosPuntos } : null);
+      } else if (totalPuntosAGenerar > 0) {
+        const nuevosPuntos = puntosUsuario + totalPuntosAGenerar;
+        await this.supabase.client.from('profiles').update({ puntos: nuevosPuntos }).eq('id', usuario.id);
+        this.auth.usuarioActual.update(u => u ? { ...u, puntos: nuevosPuntos } : null);
+      }
+
       this.mensajeExito.set('¡Compra confirmada con éxito!');
       this.cart.clearCart();
       

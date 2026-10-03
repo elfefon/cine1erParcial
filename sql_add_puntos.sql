@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles
+ADD COLUMN puntos INTEGER DEFAULT 0;
