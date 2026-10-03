@@ -18,8 +18,7 @@ export function edadRangoValidator(edadMinima: number, edadMaxima: number): Vali
       edad--;
     }
     
-    if (edad < edadMinima) return { edadInvalida: 'min' };
-    if (edad > edadMaxima) return { edadInvalida: 'max' };
+    if (edad < edadMinima || edad > edadMaxima) return { edadInvalida: true };
     return null;
   };
 }
@@ -36,11 +35,17 @@ export class RegistroComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  dias = Array.from({length: 31}, (_, i) => i + 1);
+  meses = Array.from({length: 12}, (_, i) => i + 1);
+  anios = Array.from({length: 100}, (_, i) => new Date().getFullYear() - 10 - i); // 10 to 110 years ago
+
   registroForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.maxLength(50), Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
     password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(30)]],
-    fecha_nacimiento: ['', [Validators.required, edadRangoValidator(10, 100)]],
+    nacimiento_dia: ['', Validators.required],
+    nacimiento_mes: ['', Validators.required],
+    nacimiento_anio: ['', Validators.required],
     tipo_sangre: ['', Validators.required],
     color_ojos: ['', Validators.required],
     vacaciones_anuales: ['', [Validators.required, Validators.min(0), Validators.max(365)]]
@@ -52,7 +57,28 @@ export class RegistroComponent {
     if (this.registroForm.valid) {
       try {
         this.error = null;
-        const { email, password, nombre, fecha_nacimiento, tipo_sangre, color_ojos, vacaciones_anuales } = this.registroForm.getRawValue();
+        const formValue = this.registroForm.getRawValue();
+        const { email, password, nombre, tipo_sangre, color_ojos, vacaciones_anuales } = formValue;
+        
+        // Armar fecha y validar edad
+        const fecha_nacimiento = `${formValue.nacimiento_anio}-${String(formValue.nacimiento_mes).padStart(2, '0')}-${String(formValue.nacimiento_dia).padStart(2, '0')}`;
+        const fechaObj = new Date(fecha_nacimiento);
+        if (isNaN(fechaObj.getTime())) {
+          this.error = 'Fecha de nacimiento inválida.';
+          return;
+        }
+
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaObj.getFullYear();
+        if (hoy.getMonth() < fechaObj.getMonth() || (hoy.getMonth() === fechaObj.getMonth() && hoy.getDate() < fechaObj.getDate())) {
+          edad--;
+        }
+
+        if (edad < 10 || edad > 100) {
+          this.error = 'Debes tener entre 10 y 100 años para registrarte.';
+          return;
+        }
+
         console.log(`Intentando registrar usuario: ${nombre} - Email: ${email}`);
 
         await this.authService.signUp(email, password, nombre, fecha_nacimiento, tipo_sangre, color_ojos, vacaciones_anuales);

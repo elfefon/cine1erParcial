@@ -98,7 +98,16 @@ export class AuthService {
         
       if (insertError) {
         console.error('Error insertando usuario en la tabla pública:', insertError);
-        // Podrías lanzar el error o manejarlo según tu lógica
+      } else {
+        // Otorgar cupón 20% primera compra
+        const cuponCode = `BIENVENIDO-${data.user.id.substring(0,6).toUpperCase()}`;
+        await this.supabaseService.client.from('coupons').insert({
+          codigo: cuponCode,
+          porcentaje_descuento: 20,
+          es_primera_compra: true,
+          edad_minima: 0,
+          activo: true
+        });
       }
     }
     

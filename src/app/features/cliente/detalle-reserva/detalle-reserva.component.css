@@ -215,3 +215,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .detalle-container, .detalle-container * {
+    visibility: visible;
+  }
+  .detalle-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .btn-back, button, .print-hide {
+    display: none !important;
+  }
+  .card-box {
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+}

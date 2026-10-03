@@ -45,11 +45,30 @@
       </div>
       
       <div class="form-group">
-        <label for="fechaNacimiento">Fecha de Nacimiento (10 a 100 años)</label>
-        <input id="fechaNacimiento" type="date" formControlName="fecha_nacimiento">
-        @if (registroForm.controls.fecha_nacimiento.touched && registroForm.controls.fecha_nacimiento.invalid) {
+        <label>Fecha de Nacimiento (10 a 100 años)</label>
+        <div style="display: flex; gap: 10px;">
+          <select formControlName="nacimiento_dia" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+            <option value="">Día</option>
+            @for (d of dias; track d) {
+              <option [value]="d">{{ d }}</option>
+            }
+          </select>
+          <select formControlName="nacimiento_mes" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+            <option value="">Mes</option>
+            @for (m of meses; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
+          </select>
+          <select formControlName="nacimiento_anio" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+            <option value="">Año</option>
+            @for (a of anios; track a) {
+              <option [value]="a">{{ a }}</option>
+            }
+          </select>
+        </div>
+        @if ((registroForm.controls.nacimiento_dia.touched || registroForm.controls.nacimiento_mes.touched || registroForm.controls.nacimiento_anio.touched) && (registroForm.controls.nacimiento_dia.invalid || registroForm.controls.nacimiento_mes.invalid || registroForm.controls.nacimiento_anio.invalid)) {
           <small class="error-text" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">
-            Tenés que tener entre 10 y 100 años para poder registrarte.
+            Completá tu fecha de nacimiento completa.
           </small>
         }
       </div>

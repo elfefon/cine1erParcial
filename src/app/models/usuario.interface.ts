@@ -4,4 +4,6 @@ export interface Usuario {
   rol: 'admin' | 'cliente' | 'gerente' | 'empleado';
   nombre: string;
   puntos?: number;
+  credito_saldo?: number;
+  fecha_nacimiento?: string;
 }
