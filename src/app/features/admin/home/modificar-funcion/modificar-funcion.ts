@@ -14,6 +14,8 @@ export class ModificarFuncion implements OnInit {
   @Input() funcion: any;
   @Input() peliculas: any[] = [];
   @Input() salas: any[] = [];
+  // Para las colisiones necesitamos saber las funciones existentes
+  @Input() funciones: any[] = [];
   
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
@@ -29,6 +31,8 @@ export class ModificarFuncion implements OnInit {
     precio: [0, [Validators.required, Validators.min(0)]],
     formato: [{value: '', disabled: true}]
   });
+
+  entradasVendidas = 0;
 
   getNombrePelicula(id: string | null | undefined): string {
     if (!id) return '';
@@ -66,6 +70,8 @@ export class ModificarFuncion implements OnInit {
       });
     }
 
+    this.verificarEntradasVendidas();
+
     this.funcionForm.get('sala_id')?.valueChanges.subscribe(salaId => {
       const sala = this.salas.find(s => s.id === salaId);
       if (sala) {
@@ -74,9 +80,64 @@ export class ModificarFuncion implements OnInit {
     });
   }
 
+  async verificarEntradasVendidas() {
+    const { data } = await this.supabase.client.from('seat_reservations').select('id').eq('showtime_id', this.funcion.id);
+    if (data && data.length > 0) {
+      this.entradasVendidas = data.length;
+      // Bloquear todo excepto el precio si ya hay ventas
+      this.funcionForm.get('pelicula_id')?.disable();
+      this.funcionForm.get('horario')?.disable();
+      this.funcionForm.get('sala_id')?.disable();
+      this.funcionForm.get('idioma')?.disable();
+    }
+  }
+
   async onSubmit() {
     if (this.funcionForm.valid) {
       const formValue = this.funcionForm.getRawValue();
+      const pelicula = this.peliculas.find(p => p.id === formValue.pelicula_id);
+
+      // Si no hay ventas, validamos fechas y colisiones
+      if (this.entradasVendidas === 0) {
+        const inicio = new Date(formValue.horario).getTime();
+        const hoyMs = new Date().getTime();
+
+        if (inicio < hoyMs) {
+          alert('Error: La fecha de la función no puede ser en el pasado.');
+          return;
+        }
+
+        let fechaBaseMs = hoyMs;
+        if (pelicula?.fecha_estreno) {
+          const estrenoMs = new Date(pelicula.fecha_estreno).getTime();
+          if (estrenoMs > hoyMs) {
+            fechaBaseMs = estrenoMs;
+            if (inicio < estrenoMs) {
+              alert('Error: La función no puede programarse para ANTES de la fecha de estreno (Pre-venta).');
+              return;
+            }
+          }
+        }
+        
+        const maxMs = fechaBaseMs + (7 * 24 * 60 * 60 * 1000);
+        if (inicio > maxMs) { 
+          alert('Error: La función solo puede programarse como máximo hasta 1 semana (desde hoy o desde su estreno).'); 
+          return; 
+        }
+
+        // Colisiones
+        const fin = inicio + ((pelicula?.duracion_min || 120) * 60000);
+        const enSala = (this.funciones || []).filter(x => x.room_id === formValue.sala_id && x.id !== this.funcion.id);
+        
+        for (const ex of enSala) {
+          const exIni = new Date(ex.fecha_hora).getTime();
+          const exFin = exIni + ((ex.movies?.duracion_min || 120) * 60000);
+          if (inicio < (exFin + 1800000) && exIni < (fin + 1800000)) {
+            alert('Error: Choca con otra función o no respeta los 30 min de limpieza en la misma sala.'); 
+            return;
+          }
+        }
+      }
 
       const updateData = {
         movie_id: formValue.pelicula_id,
@@ -98,6 +159,10 @@ export class ModificarFuncion implements OnInit {
   }
 
   async onEliminar() {
+    if (this.entradasVendidas > 0) {
+      alert('No se puede eliminar la función porque ya tiene ' + this.entradasVendidas + ' entrada(s) vendida(s).');
+      return;
+    }
     const confirmacion = confirm('¿Estás seguro que deseas eliminar esta función de forma permanente?');
     if (confirmacion) {
       try {
