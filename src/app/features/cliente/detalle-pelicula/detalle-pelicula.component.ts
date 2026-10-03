@@ -17,6 +17,9 @@ export class DetallePeliculaComponent implements OnInit {
   
   pelicula = signal<Pelicula | null>(null);
   funciones = signal<any[]>([]);
+  reviews = signal<any[]>([]);
+  promedioEstrellas = signal<number>(0);
+  porcentajeEstrellas = signal<string>('0%');
 
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -37,8 +40,24 @@ export class DetallePeliculaComponent implements OnInit {
         .eq('movie_id', id)
         .order('fecha_hora', { ascending: true });
         
+        
       if (dataFunciones.data) {
         this.funciones.set(dataFunciones.data);
+      }
+
+      const dataReviews = await this.supabase.client
+        .from('reviews')
+        .select('*, profiles(nombre)')
+        .eq('movie_id', id)
+        .order('created_at', { ascending: false });
+        
+      if (dataReviews.data && dataReviews.data.length > 0) {
+        this.reviews.set(dataReviews.data);
+        const sum = dataReviews.data.reduce((acc, r) => acc + (r.calificacion || 0), 0);
+        const avg = sum / dataReviews.data.length;
+        this.promedioEstrellas.set(avg);
+        // porcentaje de 0 a 100 basado en 5 estrellas (ej: 4 estrellas = 80%)
+        this.porcentajeEstrellas.set(`${(avg / 5) * 100}%`);
       }
     }
   }

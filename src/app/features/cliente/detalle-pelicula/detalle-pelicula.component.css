@@ -135,10 +135,20 @@
   font-size: 1.2rem;
 }
 
-.funciones-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+/* Scrollbar para el carrusel de funciones */
+.funciones-carousel::-webkit-scrollbar {
+  height: 8px;
+}
+.funciones-carousel::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.02);
+  border-radius: 4px;
+}
+.funciones-carousel::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+.funciones-carousel::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 9, 20, 0.5);
 }
 
 .funcion-card {
@@ -151,7 +161,9 @@
   text-decoration: none;
   color: var(--text-main);
   transition: all 0.2s ease;
-  min-width: 140px;
+  min-width: 160px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
 }
 
 .funcion-card:hover {

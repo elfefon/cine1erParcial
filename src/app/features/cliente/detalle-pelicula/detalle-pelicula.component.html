@@ -5,8 +5,44 @@
   </a>
 
   <div class="movie-detail-card">
-    <div class="poster-box">
-      <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre">
+    <div class="poster-col">
+      <div class="poster-box">
+        <img [src]="p.imagen_url" [alt]="'Póster de ' + p.nombre">
+      </div>
+
+      <!-- Sistema de Reseñas debajo de la imagen -->
+      <div class="reviews-section" style="margin-top: 20px; background: var(--bg-dark); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <h3 style="margin: 0 0 10px 0; font-size: 1.1rem;">Calificación de Usuarios</h3>
+        
+        <div class="stars-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+          <!-- Estrellas rellenadas por porcentaje -->
+          <div class="stars-outer" style="position: relative; display: inline-block; font-size: 1.5rem; color: var(--text-muted);">
+            ★★★★★
+            <div class="stars-inner" style="position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; color: var(--accent-gold); width: {{ porcentajeEstrellas() }};">
+              ★★★★★
+            </div>
+          </div>
+          <span style="font-size: 1.2rem; font-weight: bold;">{{ promedioEstrellas() | number:'1.1-1' }} / 5</span>
+          <span style="color: var(--text-muted); font-size: 0.9rem;">({{ reviews().length }} reseñas)</span>
+        </div>
+
+        <h4 style="margin: 0 0 10px 0; font-size: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">Comentarios</h4>
+        <div class="comments-list" style="max-height: 200px; overflow-y: auto;">
+          @if (reviews().length > 0) {
+            @for (r of reviews(); track r.id) {
+              @if (r.comentario && r.comentario.trim().length > 0) {
+                <div style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                  <strong style="color: var(--primary); font-size: 0.9rem;">{{ r.profiles?.nombre || 'Usuario' }}</strong>
+                  <span style="color: var(--accent-gold); font-size: 0.8rem; margin-left: 5px;">{{ r.calificacion }} ⭐</span>
+                  <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #ccc;">{{ r.comentario }}</p>
+                </div>
+              }
+            }
+          } @else {
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Todavía no hay comentarios para esta película.</p>
+          }
+        </div>
+      </div>
     </div>
 
     <div class="info-box">
@@ -24,7 +60,7 @@
       <div class="section-title" style="margin-top: 25px;">Funciones Disponibles</div>
 
       @if (funciones().length > 0) {
-      <div class="funciones-grid">
+      <div class="funciones-carousel" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; snap-type: x mandatory;">
         @for (f of funciones(); track f.id) {
         <a [routerLink]="['/reserva', p.id]" [queryParams]="{ showtime: f.id }" class="funcion-card">
           <div class="f-date">📅 {{ f.fecha_hora | date:'dd/MMM' }}</div>
