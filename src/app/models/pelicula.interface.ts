@@ -3,6 +3,7 @@ export interface Pelicula {
   nombre: string;
   sinopsis: string;
   imagen_url: string;
+  imagen_apaisada_url?: string;
   activa?: boolean;
   duracion_min?: number;
   restriccion_edad?: number;

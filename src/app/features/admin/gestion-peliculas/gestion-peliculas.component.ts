@@ -18,7 +18,7 @@ export class GestionPeliculasComponent implements OnInit {
 
   funcionSeleccionadaParaModificar = signal<any>(null);
 
-  vistaActual = signal<'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones'>('menu');
+  vistaActual = signal<'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones' | 'proximamente'>('menu');
 
   peliculas = signal<Pelicula[]>([]);
   salas = signal<any[]>([]);
@@ -28,6 +28,12 @@ export class GestionPeliculasComponent implements OnInit {
   recomendadasBorrador = signal<Pelicula[]>([]);
   peliculasDisponiblesParaRecomendar = computed(() => {
     return this.peliculas().filter(p => !this.recomendadasBorrador().some(r => r.id === p.id) && p.activa);
+  });
+
+  // Lista para Próximamente (backdrop url)
+  peliculasProximamenteAdmin = computed(() => {
+    const hoy = new Date().toISOString().split('T')[0];
+    return this.peliculas().filter(p => p.fecha_estreno && p.fecha_estreno > hoy);
   });
 
   filtroBusqueda = signal<string>('');
@@ -108,6 +114,11 @@ export class GestionPeliculasComponent implements OnInit {
     formato: [{ value: '', disabled: true }]
   });
 
+  preventaForm = this.fb.nonNullable.group({
+    pelicula_id: ['', Validators.required],
+    imagen_apaisada_url: ['', Validators.required]
+  });
+
   async ngOnInit() {
     await this.cargarPeliculas();
     await this.cargarSalas();
@@ -176,7 +187,34 @@ export class GestionPeliculasComponent implements OnInit {
 
   // --- FIN RECOMENDACIONES ---
 
-  cambiarVista(vista: 'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones') {
+  onSeleccionarPeliculaPreventa(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const nombre = target.value;
+    const p = this.peliculas().find(x => x.nombre === nombre);
+    if (p) {
+      this.preventaForm.patchValue({ pelicula_id: p.id, imagen_apaisada_url: p.imagen_apaisada_url || '' });
+    } else {
+      this.preventaForm.patchValue({ pelicula_id: '', imagen_apaisada_url: '' });
+    }
+  }
+
+  async onSubmitPreventa() {
+    if (this.preventaForm.valid) {
+      const { pelicula_id, imagen_apaisada_url } = this.preventaForm.getRawValue();
+      const { error } = await this.supabase.client.from('movies').update({ imagen_apaisada_url: imagen_apaisada_url.trim() }).eq('id', pelicula_id);
+      
+      if (error) {
+        alert(`Error al guardar la imagen panorámica: ${error.message}`);
+      } else {
+        this.peliculas.update(lista => lista.map(p => p.id === pelicula_id ? { ...p, imagen_apaisada_url: imagen_apaisada_url.trim() } : p));
+        alert(`Imagen guardada con éxito.`);
+        this.preventaForm.reset();
+        // Reset autocompletar si es necesario, pero bastará con que el usuario lo cambie.
+      }
+    }
+  }
+
+  cambiarVista(vista: 'menu' | 'crear-funcion' | 'modificar-funcion' | 'ver-funciones' | 'crear-pelicula' | 'ver-peliculas' | 'recomendaciones' | 'proximamente') {
     this.vistaActual.set(vista);
     this.filtroBusqueda.set(''); // reset search
     if (vista === 'recomendaciones') {

@@ -13,7 +13,7 @@
       <div class="preventa-carousel">
         @for (p of peliculasPreventa(); track p.id) {
           <a [routerLink]="['/pelicula', p.id]" class="preventa-slide">
-            <img [src]="p.imagen_url" [alt]="p.nombre" class="preventa-bg">
+            <img [src]="p.imagen_apaisada_url || p.imagen_url" [alt]="p.nombre" class="preventa-bg">
             <div class="preventa-gradient"></div>
             
             <div class="preventa-content">

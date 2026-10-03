@@ -32,7 +32,7 @@
           <h3>Página</h3>
           <div class="hub-buttons">
             <button (click)="cambiarVista('recomendaciones')">Recomendaciones</button>
-            <button title="Próximamente disponible">Próximamente</button>
+            <button (click)="cambiarVista('proximamente')">Próximamente</button>
           </div>
         </div>
       </div>
@@ -84,6 +84,52 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- PROXIMAMENTE (Backdrop Config) -->
+    <div *ngSwitchCase="'proximamente'">
+      <div class="page-header">
+        <h2>Gestión de Próximamente (Pre-Ventas)</h2>
+        <p>Acomodá la foto panorámica (Backdrop) que se mostrará en el Hero Slider de pre-ventas.</p>
+      </div>
+
+      <div class="form-card" style="margin-top: 20px;">
+        <h3>Configurar Foto Panorámica</h3>
+        <form [formGroup]="preventaForm" (ngSubmit)="onSubmitPreventa()">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Película (con fecha de estreno asignada)</label>
+              
+              <!-- Select oculto para validación -->
+              <select formControlName="pelicula_id" style="display: none;">
+                <option value="">Seleccione una película</option>
+                @for (p of peliculasProximamenteAdmin(); track p.id) {
+                  <option [value]="p.id">{{ p.nombre }}</option>
+                }
+              </select>
+
+              <!-- Input con datalist -->
+              <input type="text" 
+                     placeholder="🔍 Escribe para buscar una película..." 
+                     list="peliculas-proximamente-list"
+                     [value]="getNombrePelicula(preventaForm.get('pelicula_id')?.value)"
+                     (change)="onSeleccionarPeliculaPreventa($event)">
+                     
+              <datalist id="peliculas-proximamente-list">
+                @for (p of peliculasProximamenteAdmin(); track p.id) {
+                  <option [value]="p.nombre"></option>
+                }
+              </datalist>
+            </div>
+
+            <div class="form-group full-width">
+              <label>URL de Imagen Apaisada (Backdrop)</label>
+              <input type="text" placeholder="https://..." formControlName="imagen_apaisada_url">
+            </div>
+          </div>
+          <button type="submit" class="btn-save" [disabled]="preventaForm.invalid">💾 Guardar Imagen</button>
+        </form>
       </div>
     </div>
 
