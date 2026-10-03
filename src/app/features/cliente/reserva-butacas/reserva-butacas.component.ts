@@ -40,14 +40,24 @@ export class ReservaButacasComponent implements OnInit {
   loading = signal(false);
   mensajeExito = signal('');
 
-  precioButaca = 5000;
+  precioBase = computed(() => {
+    return this.showtimeRaw()?.precio_base || 5000;
+  });
 
   butacasSeleccionadasCount = computed(() => {
     return this.butacas().filter(b => b.estado === 'seleccionada').length;
   });
 
   total = computed(() => {
-    return this.butacasSeleccionadasCount() * this.precioButaca;
+    let sum = 0;
+    const base = this.precioBase();
+    this.butacas().filter(b => b.estado === 'seleccionada').forEach(b => {
+      const tipo = (b.tipo_butaca || '').toLowerCase();
+      if (tipo === 'vip') sum += base * 2;
+      else if (tipo === 'discapacitado' || tipo === 'discapacitados') sum += base * 1.5;
+      else sum += base;
+    });
+    return sum;
   });
 
   async ngOnInit() {
@@ -132,7 +142,7 @@ export class ReservaButacasComponent implements OnInit {
       id_funcion: this.showtimeId(),
       pelicula_nombre: this.pelicula()?.nombre || 'Desconocida',
       butacas: seleccionadas.map(b => b.numero_butaca),
-      precioButaca: this.precioButaca,
+      precioButaca: this.precioBase(),
       precioTotal: this.total(),
       funcion_raw: this.showtimeRaw(),
       pelicula_raw: this.pelicula()
