@@ -21,8 +21,9 @@
         <input type="text" formControlName="nombre">
       </div>
       <div class="form-group">
-        <label>URL del Póster</label>
-        <input type="text" formControlName="imagen_url">
+        <label>Póster de la Película</label>
+        <input type="file" accept="image/*" (change)="onFileSelected($event)">
+        <small style="color: var(--text-muted); display: block; margin-top: 5px;">Selecciona una imagen para subirla al servidor.</small>
       </div>
       <div class="form-group full-width">
         <label>Sinopsis</label>
@@ -49,6 +50,8 @@
         <label for="activa">Película activa en cartelera</label>
       </div>
     </div>
-    <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid">💾 Guardar Película</button>
+    <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid || !selectedFile || uploading()">
+      {{ uploading() ? '⏳ Subiendo...' : '💾 Guardar Película' }}
+    </button>
   </form>
 </div>
