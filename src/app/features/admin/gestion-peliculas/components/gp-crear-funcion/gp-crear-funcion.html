@@ -18,6 +18,10 @@
         <select formControlName="idioma"><option value="">Seleccione...</option><option value="Castellano">Castellano</option><option value="Subtitulada">Subtitulada</option></select>
       </div>
       <div class="form-group"><label>Precio</label><input type="number" formControlName="precio"></div>
+      <div class="form-group full-width checkbox-group">
+        <input type="checkbox" id="es_preventa" formControlName="es_preventa">
+        <label for="es_preventa">Es Pre-venta</label>
+      </div>
     </div>
     <button type="submit" class="btn-save" [disabled]="funcionForm.invalid">💾 Guardar Función</button>
   </form>

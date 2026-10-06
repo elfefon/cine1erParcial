@@ -3,7 +3,12 @@
   <form [formGroup]="comboForm" (ngSubmit)="onSubmit()">
     <div class="form-grid">
       <div class="form-group"><label>Nombre del Combo</label><input type="text" formControlName="nombre"></div>
-      <div class="form-group"><label>Precio de Venta ($)</label><input type="number" formControlName="precio"></div>
+      <div class="form-group"><label>Descuento (%)</label><input type="number" formControlName="descuento_porcentaje" min="0" max="100"></div>
+    </div>
+    
+    <div style="margin-bottom: 20px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+      Precio Total de Partes: ${{ precioPartes() }} <br>
+      Precio Final (con {{ comboForm.get('descuento_porcentaje')?.value }}% desc): <span style="color: var(--primary); font-size: 1.2rem;">${{ precioFinal() }}</span>
     </div>
 
     <div class="combo-builder-grid">

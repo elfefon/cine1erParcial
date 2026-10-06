@@ -22,8 +22,7 @@ export class GpCrearFuncionComponent implements OnInit {
     horario: ['', Validators.required],
     idioma: ['', Validators.required],
     precio: [0, [Validators.required, Validators.min(0)]],
-    // formato ya no depende de la sala antes de crear, o tal vez sí si asumimos un formato estándar.
-    // Lo dejaremos por defecto en 2D o según la sala asignada al final.
+    es_preventa: [false]
   });
 
   ngOnInit() {
@@ -97,7 +96,7 @@ export class GpCrearFuncionComponent implements OnInit {
       
       await this.supabase.insertData('showtimes', {
         movie_id: f.pelicula_id, room_id: salaAsignadaId, fecha_hora: f.horario,
-        idioma: f.idioma, precio_base: f.precio, formato: salaFormato
+        idioma: f.idioma, precio_base: f.precio, formato: salaFormato, es_preventa: f.es_preventa
       });
       await this.state.cargarFunciones();
       await this.state.registrarAccion('CREATE_SHOWTIME');

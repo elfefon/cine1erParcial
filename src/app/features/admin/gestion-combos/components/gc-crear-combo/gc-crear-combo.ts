@@ -18,7 +18,7 @@ export class GcCrearComboComponent {
 
   comboForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    precio: [0, [Validators.required, Validators.min(0)]]
+    descuento_porcentaje: [10, [Validators.required, Validators.min(0), Validators.max(100)]]
   });
 
   productosSeleccionados = signal<any[]>([]);
@@ -35,12 +35,23 @@ export class GcCrearComboComponent {
   agregar(p: any) { this.productosSeleccionados.update(l => [...l, p]); }
   quitar(index: number) { this.productosSeleccionados.update(l => { const n = [...l]; n.splice(index, 1); return n; }); }
 
+  precioPartes = computed(() => {
+    return this.productosSeleccionados().reduce((sum, p) => sum + (p.precio || 0), 0);
+  });
+
+  precioFinal = computed(() => {
+    const total = this.precioPartes();
+    const descuento = this.comboForm.get('descuento_porcentaje')?.value || 0;
+    return Math.floor(total * (1 - descuento / 100));
+  });
+
   async onSubmit() {
     if (this.comboForm.valid && this.productosSeleccionados().length > 0) {
       const f = this.comboForm.getRawValue();
+      const precioCalculado = this.precioFinal();
       const combo = {
-        nombre: f.nombre, categoria: 'Combo', precio: f.precio,
-        costo_puntos: Math.floor(f.precio / 5), imagen_url: null, productos_incluidos: this.productosSeleccionados()
+        nombre: f.nombre, categoria: 'Combo', precio: precioCalculado,
+        costo_puntos: Math.floor(precioCalculado / 5), imagen_url: null, productos_incluidos: this.productosSeleccionados()
       };
       await this.supabase.insertData('candy_products', combo);
       await this.state.cargarCombos();

@@ -11,6 +11,11 @@
       🎉 {{ mensajeExito() }}
     </div>
   } @else {
+    @if (warningPreventa()) {
+      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center;">
+        ⚠️ {{ warningPreventa() }}
+      </div>
+    }
     @if (butacas().length === 0) {
       <div class="sala-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
         ⚠️ No hay butacas registradas o accesibles para esta sala en la base de datos.

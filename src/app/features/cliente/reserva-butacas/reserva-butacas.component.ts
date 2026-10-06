@@ -39,12 +39,29 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
   
   loading = signal(false);
   mensajeExito = signal('');
-  
+  warningPreventa = signal('');
+
   private realtimeChannel: any;
   private myLockedSeatIds: string[] = [];
 
   precioBase = computed(() => {
-    return this.showtimeRaw()?.precio_base || 5000;
+    let base = this.showtimeRaw()?.precio_base || 5000;
+    
+    // T7.1: Descuento por edad
+    const user = this.auth.usuarioActual();
+    if (user && user.fecha_nacimiento) {
+      const fechaNac = new Date(user.fecha_nacimiento);
+      const hoy = new Date();
+      let age = hoy.getFullYear() - fechaNac.getFullYear();
+      if (hoy.getMonth() < fechaNac.getMonth() || (hoy.getMonth() === fechaNac.getMonth() && hoy.getDate() < fechaNac.getDate())) {
+        age--;
+      }
+      
+      if (age < 12 || age > 65) {
+        base = base * 0.8; // 20% descuento
+      }
+    }
+    return base;
   });
 
   butacasSeleccionadasCount = computed(() => {
@@ -89,6 +106,16 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     const showtime = resShowtime.data;
     this.showtimeId.set(showtime.id);
     this.showtimeRaw.set(showtime);
+
+    // Warning preventa
+    if (showtime.es_preventa) {
+      const showDate = new Date(showtime.fecha_hora);
+      const now = new Date();
+      const diffDays = (showDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+      if (diffDays > 10) {
+        this.warningPreventa.set('Las entradas en preventa no admiten reembolso de puntos.');
+      }
+    }
 
     const resSeats = await this.supabase.client.from('seats').select('*').eq('room_id', showtime.room_id);
     const dbSeats = resSeats.data || [];
