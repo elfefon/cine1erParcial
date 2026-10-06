@@ -77,7 +77,7 @@ describe('SupabaseService', () => {
     await service.deleteData('test_table', '1');
     
     expect(mockSupabaseClient.from).toHaveBeenCalledWith('test_table');
-    expect(mockSupabaseClient.delete).toHaveBeenCalled();
+    expect(mockSupabaseClient.update).toHaveBeenCalledWith({ activo: false });
     expect(mockSupabaseClient.eq).toHaveBeenCalledWith('id', '1');
   });
 });

@@ -56,7 +56,7 @@ export class SupabaseService {
 }
 */
 
-//funcion para poblar seccion PROXIMAMENTE
+  /*funcion para poblar seccion PROXIMAMENTE
   async poblarProximosEstrenos() {
     const tmdbApiKey = environment.tmbd_key; 
 
@@ -146,7 +146,7 @@ export class SupabaseService {
     }
   }
     
-
+*/
 
   // Función para calcular la edad
   private obtenerRestriccionEdad(releaseDates: any): number {
@@ -232,8 +232,33 @@ export class SupabaseService {
   //              Métodos genéricos
   //==================================================
 
-  async getTableData<T>(table: string): Promise<T[]> {
-    const { data, error } = await this._supabase.from(table).select('*');
+  async getTableData<T>(table: string, filters?: Record<string, any>): Promise<T[]> {
+    let query = this._supabase.from(table).select('*');
+    
+    // Filtro obligatorio para tablas de usuario si se requiere
+    const userTables = ['tickets', 'ticket_candy_items', 'seat_reservations', 'profiles'];
+    if (userTables.includes(table)) {
+      const { data: { user } } = await this._supabase.auth.getUser();
+      if (user) {
+        // Obtenemos rol para ver si es admin
+        const { data: profile } = await this._supabase.from('profiles').select('rol').eq('id', user.id).single();
+        if (!profile || !['admin', 'gerente'].includes(profile.rol)) {
+          if (table === 'profiles') {
+            query = query.eq('id', user.id);
+          } else {
+            query = query.eq('user_id', user.id);
+          }
+        }
+      }
+    }
+
+    if (filters) {
+      for (const [key, value] of Object.entries(filters)) {
+        query = query.eq(key, value);
+      }
+    }
+    
+    const { data, error } = await query;
     if (error) throw error;
     return data as T[];
   }
@@ -251,7 +276,8 @@ export class SupabaseService {
   }
   
   async deleteData(table: string, id: string): Promise<void> {
-    const { error } = await this._supabase.from(table).delete().eq('id', id);
+    // Borrado lógico
+    const { error } = await this._supabase.from(table).update({ activo: false }).eq('id', id);
     if (error) throw error;
   }
 }
