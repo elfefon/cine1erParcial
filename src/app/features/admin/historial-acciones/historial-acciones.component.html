@@ -1,7 +1,13 @@
 <div class="page-container">
-  <div class="page-header">
-    <h2>Historial de Acciones</h2>
-    <p>Registro de actividades y cambios realizados por los administradores</p>
+  <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2>Historial de Acciones</h2>
+      <p>Registro de actividades y cambios realizados por los administradores</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-primary" style="background-color: #ef4444;" (click)="exportToPdf()">📄 Exportar a PDF</button>
+      <button class="btn-primary" style="background-color: #10b981;" (click)="exportToExcel()">📊 Exportar a Excel</button>
+    </div>
   </div>
 
   <div class="table-card">

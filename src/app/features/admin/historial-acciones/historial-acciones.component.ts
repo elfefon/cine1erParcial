@@ -3,6 +3,9 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { Accion } from '../../../models/accion.interface';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { TraducirAccionPipe } from '../../../shared/pipes/traducir-accion.pipe';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-historial-acciones',
@@ -33,5 +36,37 @@ export class HistorialAccionesComponent implements OnInit {
     } else if (data) {
       this.historial.set(data as any[]);
     }
+  }
+
+  exportToPdf() {
+    const doc = new jsPDF();
+    doc.text('Historial de Acciones - CineUTN', 14, 15);
+    const bodyData = this.historial().map(h => [
+      new Date(h.fecha_hora).toLocaleString(),
+      h.profiles?.nombre || 'Desconocido',
+      h.profiles?.role || 'N/A',
+      h.accion,
+      h.entidad_afectada
+    ]);
+    (doc as any).autoTable({
+      head: [['Fecha/Hora', 'Usuario', 'Rol', 'Acción', 'Entidad']],
+      body: bodyData,
+      startY: 20
+    });
+    doc.save('historial_acciones.pdf');
+  }
+
+  exportToExcel() {
+    const data = this.historial().map(h => ({
+      'Fecha/Hora': new Date(h.fecha_hora).toLocaleString(),
+      'Usuario': h.profiles?.nombre || 'Desconocido',
+      'Rol': h.profiles?.role || 'N/A',
+      'Acción': h.accion,
+      'Entidad': h.entidad_afectada
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+    XLSX.writeFile(wb, 'historial_acciones.xlsx');
   }
 }
