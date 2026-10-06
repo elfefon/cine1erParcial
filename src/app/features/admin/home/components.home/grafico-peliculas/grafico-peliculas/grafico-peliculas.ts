@@ -1,6 +1,9 @@
 import { Component, inject, OnInit, AfterViewInit } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/services/supabase.service';
 import { Chart, registerables } from 'chart.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 Chart.register(...registerables);
 
@@ -117,7 +120,25 @@ export class GraficoPeliculas implements OnInit, AfterViewInit {
   }
 
   exportar(formato: 'pdf' | 'excel') {
-    console.log(`Exportando datos a formato: ${formato}`);
-    // Implementación pendiente
+    if (formato === 'pdf') {
+      const doc = new jsPDF();
+      doc.text(`Top Películas - ${this.filtroActual}`, 14, 15);
+      const bodyData = this.datosGraficoPeliculas.map(item => [item.pelicula_nombre, item.entradas_vendidas]);
+      autoTable(doc, {
+        head: [['Película', 'Entradas Vendidas']],
+        body: bodyData,
+        startY: 20
+      });
+      doc.save(`top_peliculas_${this.filtroActual}.pdf`);
+    } else {
+      const data = this.datosGraficoPeliculas.map(item => ({
+        'Película': item.pelicula_nombre,
+        'Entradas Vendidas': item.entradas_vendidas
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Películas');
+      XLSX.writeFile(wb, `top_peliculas_${this.filtroActual}.xlsx`);
+    }
   }
 }

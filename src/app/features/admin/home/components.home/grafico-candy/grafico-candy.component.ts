@@ -1,6 +1,9 @@
 import { Component, inject, OnInit, AfterViewInit } from '@angular/core';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 import { Chart, registerables } from 'chart.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 Chart.register(...registerables);
 
@@ -103,6 +106,25 @@ export class GraficoCandyComponent implements OnInit, AfterViewInit {
   }
 
   exportar(formato: 'pdf' | 'excel') {
-    console.log(`Exportando candy a: ${formato}`);
+    if (formato === 'pdf') {
+      const doc = new jsPDF();
+      doc.text(`Candy Más Consumido - ${this.filtroActual}`, 14, 15);
+      const bodyData = this.datosGrafico.map(item => [item.producto_nombre, item.cantidad_vendida]);
+      autoTable(doc, {
+        head: [['Producto', 'Cantidad Vendida']],
+        body: bodyData,
+        startY: 20
+      });
+      doc.save(`candy_consumido_${this.filtroActual}.pdf`);
+    } else {
+      const data = this.datosGrafico.map(item => ({
+        'Producto': item.producto_nombre,
+        'Cantidad Vendida': item.cantidad_vendida
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Candy');
+      XLSX.writeFile(wb, `candy_consumido_${this.filtroActual}.xlsx`);
+    }
   }
 }

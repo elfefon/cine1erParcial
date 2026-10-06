@@ -7,7 +7,7 @@
       <div style="background: var(--bg-dark); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 20px; text-align: center;">
         <span style="display: block; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 10px;">Puntos de Fidelización</span>
         <strong style="font-size: 3rem; color: var(--accent-gold); display: block;">⭐ {{ authService.usuarioActual()?.puntos || 0 }}</strong>
-        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Aprovechalos para canjear entradas y combos.</span>
+        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px;">Aprovechalos en tus proximas compras.</span>
       </div>
 
       <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center;">
@@ -66,6 +66,16 @@
       @if (authService.usuarioActual()?.rol === 'admin') {
         <button style="padding: 10px 20px; background: var(--accent-gold); color: var(--bg-dark); border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">
           ⚙️ Panel de Administrador
+        </button>
+      }
+      @if (authService.usuarioActual()?.rol === 'gerente') {
+        <button style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">
+          📊 Panel de Gerente
+        </button>
+      }
+      @if (authService.usuarioActual()?.rol === 'empleado') {
+        <button style="padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/empleado/scanner">
+          📷 Panel de Empleado
         </button>
       }
       <button class="btn-logout" (click)="logout()">🚪 Cerrar Sesión</button>

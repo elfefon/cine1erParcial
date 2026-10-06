@@ -18,7 +18,7 @@
           <!-- Estrellas rellenadas por porcentaje -->
           <div class="stars-outer" style="position: relative; display: inline-block; font-size: 1.5rem; color: var(--text-muted);">
             ★★★★★
-            <div class="stars-inner" style="position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; color: var(--accent-gold); width: {{ porcentajeEstrellas() }};">
+            <div class="stars-inner" style="position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; color: var(--accent-gold);" [style.width]="porcentajeEstrellas()">
               ★★★★★
             </div>
           </div>
@@ -52,6 +52,13 @@
         <span class="tag tag-highlight">En Cartelera</span>
         <span class="tag">HD 4K</span>
         <span class="tag">Sonido Atmos</span>
+        <span class="tag">{{ p.restriccion_edad ? '+' + p.restriccion_edad : 'ATP' }}</span>
+        @if (p.duracion_min) {
+          <span class="tag">⏱ {{ p.duracion_min }} min</span>
+        }
+        @if (p.generos && p.generos.length > 0) {
+          <span class="tag">🎭 {{ p.generos.join(', ') }}</span>
+        }
       </div>
 
       <div class="section-title">Sinopsis</div>

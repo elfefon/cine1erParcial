@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, effect } from '@angular/core';
 
 export interface CartTicket {
   id_funcion: string;
@@ -25,6 +25,25 @@ export class CartService {
   totalTickets = computed(() => this.tickets().reduce((sum, t) => sum + t.precioTotal, 0));
   totalCandy = computed(() => this.candy().reduce((sum, c) => sum + (c.producto.precio * c.cantidad), 0));
   totalGeneral = computed(() => this.totalTickets() + this.totalCandy());
+
+  constructor() {
+    // Restaurar desde localStorage si existe
+    const savedTickets = localStorage.getItem('cineutn_cart_tickets');
+    const savedCandy = localStorage.getItem('cineutn_cart_candy');
+    
+    if (savedTickets) {
+      try { this.tickets.set(JSON.parse(savedTickets)); } catch (e) {}
+    }
+    if (savedCandy) {
+      try { this.candy.set(JSON.parse(savedCandy)); } catch (e) {}
+    }
+
+    // Efecto para sincronizar con localStorage cuando los signals cambian
+    effect(() => {
+      localStorage.setItem('cineutn_cart_tickets', JSON.stringify(this.tickets()));
+      localStorage.setItem('cineutn_cart_candy', JSON.stringify(this.candy()));
+    });
+  }
 
   addTickets(ticket: CartTicket) {
     this.tickets.update(t => [...t, ticket]);

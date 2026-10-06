@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
   styleUrl: './layout-admin.component.css'
 })
 export class LayoutAdminComponent {
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private router = inject(Router);
 
   async logout() {

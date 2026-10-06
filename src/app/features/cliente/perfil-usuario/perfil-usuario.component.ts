@@ -105,6 +105,20 @@ export class PerfilUsuarioComponent implements OnInit {
 
     this.enviandoResena.set(true);
     try {
+      // Verificar si ya existe una reseña para este usuario y película
+      const { data: existingReview, error: checkError } = await this.supabase.client
+        .from('reviews')
+        .select('id')
+        .eq('movie_id', peli.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingReview) {
+        alert('Ya enviaste una reseña para esta película y no puede ser modificada.');
+        this.cerrarCalificacion();
+        return;
+      }
+
       const payload = {
         movie_id: peli.id,
         user_id: user.id,
@@ -112,7 +126,7 @@ export class PerfilUsuarioComponent implements OnInit {
         comentario: this.comentarioValue()
       };
 
-      const { error } = await this.supabase.client.from('reviews').upsert(payload, { onConflict: 'movie_id, user_id' });
+      const { error } = await this.supabase.client.from('reviews').insert(payload);
       
       if (error) {
         console.error(error);

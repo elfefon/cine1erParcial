@@ -19,8 +19,12 @@
     } @else {
       <div class="tickets-grid">
         @for (t of tickets(); track t.id) {
-          <div class="ticket-card">
-            
+          <div class="ticket-card" [ngStyle]="{'opacity': (t.estado === 'invalido' || t.estado === 'usado') ? '0.5' : '1', 'position': 'relative'}">
+            @if (t.estado === 'invalido' || t.estado === 'usado') {
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 10; background: rgba(0,0,0,0.3); border-radius: 12px; pointer-events: none;">
+                <span style="border: 3px solid #ef4444; color: #ef4444; padding: 10px 20px; font-size: 1.5rem; font-weight: 900; text-transform: uppercase; transform: rotate(-15deg); background: rgba(0,0,0,0.8); border-radius: 8px;">YA ESCANEADO</span>
+              </div>
+            }
             <div class="ticket-image">
               @if (t.imagen) {
                 <img [src]="t.imagen" [alt]="t.titulo">

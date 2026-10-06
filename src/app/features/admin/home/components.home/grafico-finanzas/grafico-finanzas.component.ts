@@ -1,6 +1,9 @@
 import { Component, inject, OnInit, AfterViewInit } from '@angular/core';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 import { Chart, registerables } from 'chart.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 Chart.register(...registerables);
 
@@ -120,6 +123,25 @@ export class GraficoFinanzasComponent implements OnInit, AfterViewInit {
   }
 
   exportar(formato: 'pdf' | 'excel') {
-    console.log(`Exportando finanzas a: ${formato}`);
+    if (formato === 'pdf') {
+      const doc = new jsPDF();
+      doc.text(`Finanzas - ${this.filtroActual}`, 14, 15);
+      const bodyData = this.datosGrafico.map(item => [item.fecha_agrupada, `$${item.ingresos_totales}`]);
+      autoTable(doc, {
+        head: [['Fecha', 'Ingresos']],
+        body: bodyData,
+        startY: 20
+      });
+      doc.save(`finanzas_${this.filtroActual}.pdf`);
+    } else {
+      const data = this.datosGrafico.map(item => ({
+        'Fecha': item.fecha_agrupada,
+        'Ingresos': item.ingresos_totales
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Finanzas');
+      XLSX.writeFile(wb, `finanzas_${this.filtroActual}.xlsx`);
+    }
   }
 }

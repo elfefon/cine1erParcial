@@ -3,7 +3,7 @@
     <a routerLink="/cartelera" class="sidebar-brand" style="text-decoration: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 10px;">
       <span class="icon">🎬</span>
       <div>
-        <h3 style="margin: 0;">CineUTN <span class="admin-badge">Admin</span></h3>
+        <h3 style="margin: 0;">CineUTN <span class="admin-badge">{{ authService.usuarioActual()?.rol === 'admin' ? 'Admin' : 'Gerente' }}</span></h3>
       </div>
     </a>
 
@@ -24,16 +24,18 @@
             <span>🍿</span> Candy (Combos)
           </a>
         </li>
-        <li>
-          <a routerLink="historial" routerLinkActive="active">
-            <span>📋</span> Historial
-          </a>
-        </li>
-        <li>
-          <a routerLink="cupones" routerLinkActive="active">
-            <span>🎟️</span> Cupones
-          </a>
-        </li>
+        @if (authService.usuarioActual()?.rol === 'admin') {
+          <li>
+            <a routerLink="historial" routerLinkActive="active">
+              <span>📋</span> Historial
+            </a>
+          </li>
+          <li>
+            <a routerLink="cupones" routerLinkActive="active">
+              <span>🎟️</span> Cupones
+            </a>
+          </li>
+        }
       </ul>
     </nav>
 
