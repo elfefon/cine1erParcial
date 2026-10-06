@@ -1,0 +1,88 @@
+<div class="admin-container">
+  <div class="header-actions">
+    <h2>Gestión de Salas</h2>
+    <button class="btn-primary" (click)="abrirCrear()">+ Nueva Sala</button>
+  </div>
+
+  @if (loading()) {
+    <p>Cargando salas...</p>
+  } @else {
+    <div class="table-container">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Dimensiones</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sala of salas(); track sala.id) {
+            <tr>
+              <td>{{ sala.nombre }}</td>
+              <td>{{ sala.filas }}x{{ sala.columnas }}</td>
+              <td>
+                <span class="status-badge" [class.active]="sala.estado === 'activa'">
+                  {{ sala.estado | titlecase }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn-icon" (click)="abrirEditar(sala)" title="Editar">✏️</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-state">No hay salas registradas</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Modal -->
+  @if (showModal()) {
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <h3>{{ isEditing() ? 'Editar Sala' : 'Nueva Sala' }}</h3>
+        
+        <form [formGroup]="salaForm" (ngSubmit)="guardar()">
+          <div class="form-group">
+            <label>Nombre de la Sala</label>
+            <input type="text" formControlName="nombre" placeholder="Ej: Sala 1 3D">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Filas</label>
+              <input type="number" formControlName="filas" min="1" max="26">
+            </div>
+            <div class="form-group">
+              <label>Columnas</label>
+              <input type="number" formControlName="columnas" min="1" max="100">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <select formControlName="estado">
+              <option value="activa">Activa</option>
+              <option value="mantenimiento">Mantenimiento</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            @if (isEditing()) {
+              <button type="button" class="btn-danger" (click)="eliminar()">🗑️ Eliminar</button>
+            }
+            <div class="right-actions">
+              <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+              <button type="submit" class="btn-primary" [disabled]="salaForm.invalid">Guardar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

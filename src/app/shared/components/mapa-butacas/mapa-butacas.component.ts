@@ -23,35 +23,15 @@ export class MapaButacasComponent {
 
   @Output() seleccionarButaca = new EventEmitter<ButacaItem>();
 
-  // Mapa de filas A-T a índices de grid (1 a 20).
-  // La fila K no existe físicamente, por lo que la fila 11 queda vacía como pasillo central.
-  private filaGridMap: Record<string, number> = {
-    'A': 1,
-    'B': 2,
-    'C': 3,
-    'D': 4,
-    'E': 5,
-    'F': 6,
-    'G': 7,
-    'H': 8,
-    'I': 9,
-    'J': 10,
-    // Fila 11: Pasillo horizontal central (sin fila física)
-    'L': 12,
-    'M': 13,
-    'N': 14,
-    'O': 15,
-    'P': 16,
-    'Q': 17,
-    'R': 18,
-    'S': 19,
-    'T': 20
-  };
-
   obtenerFila(filaLetra: string): number {
     const letra = (filaLetra || '').trim().toUpperCase();
-    return this.filaGridMap[letra] ?? 1;
+    if (!letra) return 1;
+    // Letras de A a Z -> 1 a 26
+    const code = letra.charCodeAt(0) - 64;
+    return code > 0 ? code : 1;
   }
+
+
 
   isSeleccionada(id: string): boolean {
     return this.butacasSeleccionadasIds.includes(id);

@@ -146,13 +146,17 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'locked_seats', filter: `showtime_id=eq.${showtime}` }, payload => {
         const oldLock = payload.old as any;
-        // Se liberó una butaca (puede ser por timeout o porque alguien deseleccionó)
-        // Volverla a 'libre' si no estaba comprada (eso lo veríamos si estuviera en seat_reservations, 
-        // pero por simplicidad asumimos que vuelve a libre y si alguien la compró el canal de seat_reservations avisaría, 
-        // aunque no estamos escuchando seat_reservations. Sirve para el MVP).
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === oldLock.seat_id);
           if (b && b.estado === 'ocupada') b.estado = 'libre';
+          return [...lista];
+        });
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'seat_reservations', filter: `showtime_id=eq.${showtime}` }, payload => {
+        const newRes = payload.new as any;
+        this.butacas.update(lista => {
+          const b = lista.find(item => item.id === newRes.seat_id);
+          if (b) b.estado = 'ocupada';
           return [...lista];
         });
       })

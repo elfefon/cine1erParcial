@@ -5,6 +5,8 @@ import { LayoutAdminComponent } from './features/admin/layout-admin/layout-admin
 import { GestionPeliculasComponent } from './features/admin/gestion-peliculas/gestion-peliculas.component';
 import { GestionCombosComponent } from './features/admin/gestion-combos/gestion-combos.component';
 import { HistorialAccionesComponent } from './features/admin/historial-acciones/historial-acciones.component';
+import { CuponesComponent } from './features/admin/cupones/cupones.component';
+import { SalasComponent } from './features/admin/salas/salas';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { gerenteGuard } from './core/guards/gerente.guard';
@@ -81,7 +83,8 @@ export const routes: Routes = [
         ]
       },
       { path: 'historial', component: HistorialAccionesComponent, canMatch: [adminGuard] },
-      { path: 'cupones', component: CuponesComponent, canMatch: [adminGuard] }
+      { path: 'cupones', component: CuponesComponent, canMatch: [adminGuard] },
+      { path: 'salas', component: SalasComponent, canMatch: [adminGuard] }
     ]
   },
   {
