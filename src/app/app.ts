@@ -1,15 +1,16 @@
 import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SupabaseService } from './core/services/supabase.service';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastContainerComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('cin1erParcial');
+  protected readonly title = signal('Cine1erParcial');
 
   private supabase = inject(SupabaseService);
 

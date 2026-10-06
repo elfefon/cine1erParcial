@@ -42,7 +42,7 @@ export class HistorialAccionesComponent implements OnInit {
     const doc = new jsPDF();
     doc.text('Historial de Acciones - CineUTN', 14, 15);
     const bodyData = this.historial().map(h => [
-      new Date(h.fecha_hora).toLocaleString(),
+      new Date(h.fecha_hora as string).toLocaleString(),
       h.profiles?.nombre || 'Desconocido',
       h.profiles?.role || 'N/A',
       h.accion,
@@ -58,7 +58,7 @@ export class HistorialAccionesComponent implements OnInit {
 
   exportToExcel() {
     const data = this.historial().map(h => ({
-      'Fecha/Hora': new Date(h.fecha_hora).toLocaleString(),
+      'Fecha/Hora': new Date(h.fecha_hora as string).toLocaleString(),
       'Usuario': h.profiles?.nombre || 'Desconocido',
       'Rol': h.profiles?.role || 'N/A',
       'Acción': h.accion,

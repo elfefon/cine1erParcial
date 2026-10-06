@@ -36,7 +36,6 @@ import { CarritoComponent } from './features/cliente/carrito/carrito.component';
 import { PerfilUsuarioComponent } from './features/cliente/perfil-usuario/perfil-usuario.component';
 
 import { HomeComponent } from './features/admin/home/home.component';
-import { CuponesComponent } from './features/admin/cupones/cupones.component';
 
 import { ProximamenteComponent } from './features/cliente/proximamente/proximamente';
 import { MisReservasComponent } from './features/cliente/mis-reservas/mis-reservas.component';

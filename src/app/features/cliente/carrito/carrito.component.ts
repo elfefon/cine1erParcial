@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast';
 
 import { FormsModule } from '@angular/forms';
 
@@ -19,6 +20,7 @@ export class CarritoComponent {
   private supabase = inject(SupabaseService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   loading = signal(false);
   mensajeExito = signal('');
@@ -38,12 +40,12 @@ export class CarritoComponent {
 
   async confirmarCompra() {
     if (this.cart.totalGeneral() === 0) {
-      alert('El carrito está vacío');
+      this.toast.error('El carrito está vacío');
       return;
     }
 
     if (this.cart.tickets().length === 0 && this.cart.candy().length > 0) {
-      alert('No podés comprar solo productos del Candy Bar sin una entrada de cine.');
+      this.toast.error('No podés comprar solo productos del Candy Bar sin una entrada de cine.');
       return;
     }
 
@@ -55,7 +57,7 @@ export class CarritoComponent {
       const email = prompt('Estás comprando como invitado. Por favor, ingresá tu email para enviarte los tickets:');
       if (!email) return;
       if (!email.includes('@')) {
-        alert('Email inválido.');
+        this.toast.error('Email inválido.');
         return;
       }
       emailComprador = email;
@@ -144,7 +146,7 @@ export class CarritoComponent {
     } catch (e: any) {
       console.error(e);
       // T9.1 usar alert/toast (por ahora mantendremos simple pero capturando el mensaje real)
-      alert(e.message || 'Error al procesar la compra');
+      this.toast.error(e.message || 'Error al procesar la compra');
     } finally {
       this.loading.set(false);
     }

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { ToastService } from '../../../core/services/toast';
 
 export interface Sala {
   id: string;
@@ -21,6 +22,7 @@ export interface Sala {
 export class SalasComponent implements OnInit {
   private supabase = inject(SupabaseService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
 
   salas = signal<Sala[]>([]);
   loading = signal(true);
@@ -97,7 +99,7 @@ export class SalasComponent implements OnInit {
     );
 
     if (duplicado) {
-      alert("Ya existe una sala con ese nombre.");
+      this.toast.error("Ya existe una sala con ese nombre.");
       return;
     }
 
@@ -111,16 +113,20 @@ export class SalasComponent implements OnInit {
     if (this.isEditing() && this.currentId()) {
       const { error } = await this.supabase.client.from('rooms').update(payload).eq('id', this.currentId());
       if (error) {
-        alert("Error al actualizar la sala.");
+        this.toast.error("Error al actualizar la sala.");
         console.error(error);
         return;
+      } else {
+        this.toast.success("Sala actualizada exitosamente.");
       }
     } else {
       const { error } = await this.supabase.client.from('rooms').insert(payload);
       if (error) {
-        alert("Error al crear la sala.");
+        this.toast.error("Error al crear la sala.");
         console.error(error);
         return;
+      } else {
+        this.toast.success("Sala creada exitosamente.");
       }
     }
 
@@ -134,8 +140,9 @@ export class SalasComponent implements OnInit {
     if (confirm("¿Estás seguro de que deseas eliminar esta sala? Se perderán las butacas configuradas.")) {
       const { error } = await this.supabase.client.from('rooms').delete().eq('id', this.currentId());
       if (error) {
-        alert("Error al eliminar la sala.");
+        this.toast.error("Error al eliminar la sala.");
       } else {
+        this.toast.success("Sala eliminada exitosamente.");
         this.cerrarModal();
         await this.cargarSalas();
       }

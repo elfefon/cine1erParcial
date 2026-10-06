@@ -9,17 +9,17 @@ import { User, Session } from '@supabase/supabase-js';
 export class AuthService {
   private supabaseService = inject(SupabaseService);
   public usuarioActual = signal<Usuario | null>(null);
-  
+
   constructor() {
     this.initSession();
   }
-  
+
   private async initSession() {
     const { data: { session } } = await this.supabaseService.auth.getSession();
     if (session) {
       await this.loadUserProfile(session.user);
     }
-    
+
     this.supabaseService.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         await this.loadUserProfile(session.user);
@@ -28,7 +28,7 @@ export class AuthService {
       }
     });
   }
-  
+
   private async loadUserProfile(user: User) {
     try {
       const { data, error } = await this.supabaseService.client
@@ -36,7 +36,7 @@ export class AuthService {
         .select('*')
         .eq('id', user.id)
         .single();
-        
+
       if (data) {
         const usuario: Usuario = {
           ...data,
@@ -65,13 +65,13 @@ export class AuthService {
     color_ojos?: string,
     vacaciones_anuales?: string | number
   ) {
-    const { data, error } = await this.supabaseService.auth.signUp({ 
-      email, 
+    const { data, error } = await this.supabaseService.auth.signUp({
+      email,
       password,
       options: {
-        data: { 
-          nombre, 
-          rol: 'cliente',
+        data: {
+          nombre,
+          role: 'cliente',
           fecha_nacimiento: fecha_nacimiento,
           tipo_sangre: tipo_sangre,
           color_ojos: color_ojos,
@@ -79,9 +79,9 @@ export class AuthService {
         }
       }
     });
-    
+
     if (error) throw error;
-    
+
     // Si el usuario se creó correctamente en auth, guardamos sus datos en la tabla 'usuarios' (pública)
     if (data.user) {
       const { error: insertError } = await this.supabaseService.client
@@ -95,12 +95,12 @@ export class AuthService {
           color_ojos: color_ojos,
           vacaciones_anuales: vacaciones_anuales
         });
-        
+
       if (insertError) {
         console.error('Error insertando usuario en la tabla pública:', insertError);
       } else {
         // Otorgar cupón 20% primera compra
-        const cuponCode = `BIENVENIDO-${data.user.id.substring(0,6).toUpperCase()}`;
+        const cuponCode = `BIENVENIDO-${data.user.id.substring(0, 6).toUpperCase()}`;
         await this.supabaseService.client.from('coupons').insert({
           codigo: cuponCode,
           porcentaje_descuento: 20,
@@ -110,7 +110,7 @@ export class AuthService {
         });
       }
     }
-    
+
     return data;
   }
 
