@@ -1,59 +1,62 @@
-# Cin1erParcial
+# Cine UTN - Sistema de Gestión de Cine
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.5.
+Sistema completo de venta de entradas, reservas de butacas, carrito de Candy Bar y panel administrativo para un cine.
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node.js v18+
+- Angular CLI v17+
+- Proyecto en Supabase
 
-```bash
+## Instalación
+
+1. Clonar el repositorio.
+2. Ejecutar \`npm install\` para instalar las dependencias.
+
+## Configuración de Variables de Entorno
+
+Crear el archivo \`src/environments/environment.development.ts\` y \`src/environments/environment.ts\` basándote en la siguiente estructura:
+
+\`\`\`typescript
+export const environment = {
+  production: false,
+  supabaseUrl: 'TU_SUPABASE_URL',
+  supabaseKey: 'TU_SUPABASE_ANON_KEY',
+  tmdbKey: 'TU_TMDB_API_KEY' // Si utilizas una API de terceros, mantenela segura
+};
+\`\`\`
+
+## Levantar la Aplicación
+
+Para desarrollo:
+\`\`\`bash
+npm start
+# o
 ng serve
-```
+\`\`\`
+La aplicación estará disponible en \`http://localhost:4200/\`.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Base de Datos (Supabase)
 
-## Code scaffolding
+La base de datos utiliza Supabase (PostgreSQL).
+Las migraciones y políticas RLS se encuentran en la carpeta \`supabase/migrations/\`.
+Para aplicarlas:
+1. Instalar la CLI de Supabase: \`npm install -g supabase\`
+2. Conectar al proyecto: \`supabase login\` y \`supabase link --project-ref TU_PROYECTO\`
+3. Aplicar migraciones: \`supabase db push\`
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Roles de Usuario
 
-```bash
-ng generate component component-name
-```
+El sistema cuenta con los siguientes roles, definidos en la tabla \`profiles\`:
+- \`cliente\`: Usuario estándar que puede comprar entradas y candy.
+- \`empleado\`: Puede escanear QR de entradas.
+- \`gerente\`: Puede ver y gestionar las carteleras y combos.
+- \`admin\`: Acceso total al sistema.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Credenciales de Prueba
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Si configuraste los datos iniciales, puedes usar estos usuarios para probar:
+- **Admin**: admin@cineutn.com / admin123
+- **Gerente**: gerente@cineutn.com / gerente123
+- **Empleado**: empleado@cineutn.com / empleado123
+- **Cliente**: cliente@cineutn.com / cliente123
