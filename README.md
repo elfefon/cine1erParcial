@@ -39,11 +39,7 @@ La aplicación estará disponible en \`http://localhost:4200/\`.
 ## Base de Datos (Supabase)
 
 La base de datos utiliza Supabase (PostgreSQL).
-Las migraciones y políticas RLS se encuentran en la carpeta \`supabase/migrations/\`.
-Para aplicarlas:
-1. Instalar la CLI de Supabase: \`npm install -g supabase\`
-2. Conectar al proyecto: \`supabase login\` y \`supabase link --project-ref TU_PROYECTO\`
-3. Aplicar migraciones: \`supabase db push\`
+Toda la estructura, tablas y políticas RLS ya se encuentran configuradas en el proyecto de Supabase vinculado, por lo que no es necesario ejecutar migraciones de forma local.
 
 ## Roles de Usuario
 
