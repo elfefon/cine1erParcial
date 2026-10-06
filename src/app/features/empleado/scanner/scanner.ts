@@ -26,48 +26,62 @@ export class ScannerComponent {
     this.error.set('');
 
     try {
+      // 1. Llamar a la RPC
+      const { data, error } = await this.supabase.client.rpc('validar_qr', { p_codigo: this.codigo().trim() });
+      
+      if (error) {
+        this.error.set(error.message || 'Error validando ticket.');
+        this.loading.set(false);
+        return;
+      }
+
+      if (!data.success) {
+        if (data.reason === 'already_used') {
+          this.error.set('❌ ACCESO DENEGADO: El ticket ya fue utilizado.');
+        } else if (data.reason === 'cancelled') {
+          this.error.set('❌ ACCESO DENEGADO: El ticket está CANCELADO.');
+        } else if (data.reason === 'too_early') {
+          this.error.set(`❌ ACCESO DENEGADO: Es muy temprano para la función. La película comienza a las ${new Date(data.showtime).toLocaleTimeString()}`);
+        } else if (data.reason === 'too_late') {
+          this.error.set(`❌ ACCESO DENEGADO: La función ya terminó o pasó el tiempo límite de ingreso.`);
+        } else {
+          this.error.set('❌ ACCESO DENEGADO: Ticket no encontrado o inválido.');
+        }
+        this.loading.set(false);
+        return;
+      }
+
+      // 2. Si fue exitoso, traemos los datos adicionales para mostrarlos
       const res = await this.supabase.client.from('tickets')
         .select(`
           *,
-          seat_reservations(*, showtimes(*, movies(*)))
+          seat_reservations(*, showtimes(*, movies(*))),
+          ticket_candy_items(*)
         `)
-        .eq('codigo_venta', this.codigo().trim())
+        .eq('id', data.ticket_id)
         .single();
 
-      if (res.error || !res.data) {
-        this.error.set('Ticket no encontrado o inválido.');
-      } else {
+      if (res.data) {
         const ticket = res.data;
-        if (ticket.estado === 'cancelado') {
-          this.error.set('❌ ACCESO DENEGADO: El ticket está CANCELADO.');
+        if (ticket.seat_reservations && ticket.seat_reservations.length > 0) {
+          this.resultado.set({
+            valido: true,
+            mensaje: '✅ ACCESO PERMITIDO (CINE)',
+            detalles: ticket
+          });
+        } else if (ticket.ticket_candy_items && ticket.ticket_candy_items.length > 0) {
+          // Candy Bar verificado (T3.4)
+          this.resultado.set({
+            valido: true,
+            mensaje: '🍬 TICKET DE CANDY BAR - VÁLIDO',
+            detalles: ticket
+          });
         } else {
-          // Verificar horario si es ticket de cine
-          if (ticket.seat_reservations && ticket.seat_reservations.length > 0) {
-             const sh = ticket.seat_reservations[0].showtimes;
-             const showDate = new Date(sh.fecha_hora);
-             const now = new Date();
-             const diffMinutes = (showDate.getTime() - now.getTime()) / 60000;
-             
-             // Permitimos acceso desde 30 min antes hasta 60 min después
-             if (diffMinutes > 30) {
-               this.error.set(`❌ ACCESO DENEGADO: Es muy temprano para la función. La película comienza a las ${showDate.toLocaleTimeString()}`);
-             } else if (diffMinutes < -60) {
-               this.error.set(`❌ ACCESO DENEGADO: La función ya terminó o pasó el tiempo límite de ingreso.`);
-             } else {
-               this.resultado.set({
-                 valido: true,
-                 mensaje: '✅ ACCESO PERMITIDO (CINE)',
-                 detalles: ticket
-               });
-             }
-          } else {
-            // Es un ticket solo de candy
-            this.resultado.set({
-               valido: true,
-               mensaje: '🍬 TICKET DE CANDY BAR - VÁLIDO',
-               detalles: ticket
-            });
-          }
+          this.resultado.set({
+             valido: true,
+             mensaje: '✅ TICKET VÁLIDO (SIN DETALLES)',
+             detalles: ticket
+          });
         }
       }
     } catch (e) {
