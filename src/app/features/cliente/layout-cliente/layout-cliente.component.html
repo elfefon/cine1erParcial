@@ -1,30 +1,31 @@
 <div class="cliente-layout">
-  <nav class="navbar">
-    <!-- Grupo Izquierdo -->
-    <div class="nav-left">
-      <a routerLink="/" class="brand" (click)="closeMobileMenu()">
-        <span class="brand-icon">🍿</span>
-        <span class="brand-title">Cine<span class="brand-highlight">UTN</span></span>
+  <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--bg-card); border-bottom: 1px solid var(--border-color);">
+    <!-- Grupo Izquierdo (nav-left) -->
+    <div class="nav-left" style="display: flex; align-items: center; gap: 1.5rem;">
+      <a routerLink="/" class="brand" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="brand-icon" style="font-size: 1.5rem;">🍿</span>
+        <span class="brand-title" style="font-size: 1.5rem; font-weight: bold; color: white;">Cine<span class="brand-highlight" style="color: var(--primary);">UTN</span></span>
       </a>
       
-      <a routerLink="/cartelera" routerLinkActive="active" (click)="closeMobileMenu()">Cartelera</a>
-      <a routerLink="/proximamente" routerLinkActive="active" (click)="closeMobileMenu()">Próximamente</a>
-      <a routerLink="/candy" routerLinkActive="active" (click)="closeMobileMenu()">Candy Bar</a>
+      <a routerLink="/cartelera" routerLinkActive="active" style="color: white; text-decoration: none;">Cartelera</a>
+      <a routerLink="/proximamente" routerLinkActive="active" style="color: white; text-decoration: none;">Próximamente</a>
+      <a routerLink="/candy" routerLinkActive="active" translate="no" style="color: white; text-decoration: none;">Candy Bar</a>
       @if (authService.usuarioActual()) {
-        <a routerLink="/mis-reservas" routerLinkActive="active" (click)="closeMobileMenu()">Mis Reservas</a>
+        <a routerLink="/canjes" routerLinkActive="active" style="color: white; text-decoration: none;">Canjes</a>
+        <a routerLink="/mis-reservas" routerLinkActive="active" style="color: white; text-decoration: none;">Mis Reservas</a>
       }
     </div>
 
-    <!-- Grupo Derecho -->
-    <div class="nav-right">
-      <a routerLink="/carrito" routerLinkActive="active" class="cart-btn" (click)="closeMobileMenu()" title="Carrito">
-        🛒
+    <!-- Grupo Derecho (nav-right) -->
+    <div class="nav-right" style="display: flex; align-items: center; gap: 1.5rem;">
+      <a routerLink="/carrito" routerLinkActive="active" class="cart-btn" title="Carrito" style="color: white; text-decoration: none;">
+        🛒 <span *ngIf="cart.totalGeneral() > 0" class="cart-total">(${{ cart.totalGeneral() }})</span>
       </a>
 
       @if (authService.usuarioActual()) {
         <!-- Campana de Notificaciones -->
         <div style="position: relative;">
-          <button (click)="toggleNotifMenu()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: white; position: relative;">
+          <button (click)="toggleNotifMenu()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: white; position: relative; padding: 0;">
             🔔
             <span *ngIf="notificaciones().length > 0" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;">
               {{ notificaciones().length }}
@@ -51,14 +52,10 @@
           </div>
         </div>
 
-        <a routerLink="/perfil" class="profile-btn" (click)="closeMobileMenu()" title="Perfil">👤</a>
+        <a routerLink="/perfil" class="profile-btn" title="Perfil" style="color: white; text-decoration: none; font-size: 1.5rem;">👤</a>
       } @else {
-        <a routerLink="/login" class="btn-login" (click)="closeMobileMenu()">Iniciar Sesión</a>
+        <a routerLink="/login" class="btn-login" style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: bold;">Iniciar Sesión</a>
       }
-
-      <button class="mobile-toggle" (click)="toggleMobileMenu()">
-        <span>{{ isMobileMenuOpen() ? '✖' : '☰' }}</span>
-      </button>
     </div>
   </nav>
 

@@ -41,6 +41,7 @@ import { MisReservasComponent } from './features/cliente/mis-reservas/mis-reserv
 import { DetalleReservaComponent } from './features/cliente/detalle-reserva/detalle-reserva.component';
 
 import { ScannerComponent } from './features/empleado/scanner/scanner';
+import { CanjesComponent } from './features/cliente/canjes/canjes';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -96,6 +97,7 @@ export const routes: Routes = [
       { path: 'carrito', component: CarritoComponent },
       { path: 'mis-reservas', component: MisReservasComponent, canActivate: [authGuard] },
       { path: 'mis-reservas/:id', component: DetalleReservaComponent, canActivate: [authGuard] },
+      { path: 'canjes', component: CanjesComponent, canActivate: [authGuard] },
       { path: 'perfil', component: PerfilUsuarioComponent, canActivate: [authGuard] }
     ]
   },

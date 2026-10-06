@@ -5,10 +5,12 @@ import { CartService } from '../../../core/services/cart.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-carrito',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './carrito.component.html',
   styleUrl: './carrito.component.css'
 })
@@ -20,6 +22,7 @@ export class CarritoComponent {
 
   loading = signal(false);
   mensajeExito = signal('');
+  cuponCodigo = signal('');
 
   actualizarCantidadCandy(id: string, cant: number) {
     this.cart.updateCandyQuantity(id, cant);
@@ -112,7 +115,7 @@ export class CarritoComponent {
         p_candy: candyPayload,
         p_usa_saldo: saldoUsado > 0,
         p_usa_puntos: usaPuntos,
-        p_cupon_codigo: null, // placeholder para cupones en el futuro
+        p_cupon_codigo: this.cuponCodigo().trim() || null,
         p_idempotency_key: Date.now().toString() + '-' + Math.random().toString(36).substring(2)
       };
 

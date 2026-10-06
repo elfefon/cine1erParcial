@@ -113,11 +113,30 @@ BEGIN
 
   -- 3. Descuento por Cupon (si existe)
   IF p_cupon_codigo IS NOT NULL AND p_cupon_codigo != '' THEN
-    -- Falta logica del cupon, pero dejamos el placeholder
-    -- select id, descuento from cupones where codigo = p_cupon_codigo and vigente into v_cupon_id, v_descuento_cupon;
-    -- if not found then raise exception 'Cupon invalido';
-    -- v_total_pesos := v_total_pesos - v_descuento_cupon;
-    NULL;
+  DECLARE
+    v_limite_usos INTEGER;
+    v_usos_actuales INTEGER;
+  BEGIN
+    SELECT id, porcentaje_descuento, limite_usos INTO v_cupon_id, v_descuento_cupon, v_limite_usos
+    FROM coupons
+    WHERE codigo = p_cupon_codigo AND activo = true
+      AND (fecha_expiracion IS NULL OR fecha_expiracion >= now());
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Cupon invalido o expirado';
+    END IF;
+
+    IF v_limite_usos IS NOT NULL THEN
+      SELECT count(*) INTO v_usos_actuales FROM cupon_usos WHERE cupon_id = v_cupon_id;
+      IF v_usos_actuales >= v_limite_usos THEN
+        RAISE EXCEPTION 'Este cupon ha alcanzado su limite de usos';
+      END IF;
+    END IF;
+
+    -- Aplicar descuento
+    v_descuento_cupon := v_total_pesos * (v_descuento_cupon / 100.0);
+    v_total_pesos := v_total_pesos - v_descuento_cupon;
+  END;
   END IF;
 
   -- 4. Puntos y Saldo
@@ -252,6 +271,11 @@ BEGIN
     IF v_puntos_generados > 0 THEN
       UPDATE profiles SET puntos = puntos + v_puntos_generados WHERE id = p_user_id;
       INSERT INTO puntos_movimientos (user_id, tipo, delta, origen) VALUES (p_user_id, 'acumulacion', v_puntos_generados, 'compra');
+    END IF;
+
+    IF v_cupon_id IS NOT NULL THEN
+      INSERT INTO cupon_usos (cupon_id, user_id, ticket_id, descuento_aplicado)
+      VALUES (v_cupon_id, p_user_id, v_main_ticket_id, v_descuento_cupon);
     END IF;
   ELSE
     -- Guardar la recovery de invitado

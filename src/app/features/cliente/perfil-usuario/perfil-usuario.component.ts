@@ -19,6 +19,7 @@ export class PerfilUsuarioComponent implements OnInit {
   private supabase = inject(SupabaseService);
 
   peliculasVistas = signal<any[]>([]);
+  historialPuntos = signal<any[]>([]);
 
   // Estado para la reseña
   peliculaACalificar = signal<any>(null);
@@ -74,6 +75,16 @@ export class PerfilUsuarioComponent implements OnInit {
       }
       
       this.peliculasVistas.set(Array.from(peliculasMap.values()));
+    }
+
+    const { data: puntosData } = await this.supabase.client
+      .from('puntos_movimientos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (puntosData) {
+      this.historialPuntos.set(puntosData);
     }
   }
 

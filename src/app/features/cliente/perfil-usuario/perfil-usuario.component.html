@@ -34,6 +34,34 @@
       }
     </div>
 
+    <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Historial de Puntos</h3>
+    <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; margin-bottom: 30px;">
+      @if (historialPuntos().length > 0) {
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color);">
+              <th style="padding: 12px; color: var(--text-muted);">Fecha</th>
+              <th style="padding: 12px; color: var(--text-muted);">Origen</th>
+              <th style="padding: 12px; color: var(--text-muted);">Movimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (mov of historialPuntos(); track mov.id) {
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px;">{{ mov.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td style="padding: 12px;">{{ mov.origen | titlecase }}</td>
+                <td style="padding: 12px; font-weight: bold;" [ngStyle]="{'color': mov.delta > 0 ? '#10b981' : '#ef4444'}">
+                  {{ mov.delta > 0 ? '+' : '' }}{{ mov.delta }} pts
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p style="padding: 20px; color: var(--text-muted); text-align: center;">No hay movimientos de puntos recientes.</p>
+      }
+    </div>
+
     <div class="perfil-actions">
       @if (authService.usuarioActual()?.rol === 'admin') {
         <button style="padding: 10px 20px; background: var(--accent-gold); color: var(--bg-dark); border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">

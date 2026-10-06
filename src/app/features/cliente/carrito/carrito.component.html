@@ -79,6 +79,11 @@
             <span>Total a Pagar:</span>
             <span>${{ cart.totalGeneral() }}</span>
           </div>
+
+          <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+            <label style="color: var(--text-muted); font-size: 0.9rem;">¿Tenés un código de descuento?</label>
+            <input type="text" [ngModel]="cuponCodigo()" (ngModelChange)="cuponCodigo.set($event)" placeholder="Ej: VERANO2026" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: white;">
+          </div>
           
           <button class="btn-checkout" (click)="confirmarCompra()" [disabled]="loading()">
             {{ loading() ? 'Procesando...' : 'Confirmar Compra' }}

@@ -1,0 +1,34 @@
+<div class="canjes-container">
+  <h2>🎁 Catálogo de Canjes</h2>
+  
+  <div class="puntos-info">
+    <span>Tus Puntos Disponibles:</span>
+    <strong>⭐ {{ authService.usuarioActual()?.puntos || 0 }}</strong>
+  </div>
+
+  @if (loading()) {
+    <p>Cargando catálogo...</p>
+  } @else {
+    <div class="canjes-grid">
+      @for (canje of catalogo(); track canje.id) {
+        <div class="canje-card">
+          <div class="canje-image">
+            <img [src]="canje.imagen_url || 'https://via.placeholder.com/300x200?text=Canje'" alt="Canje">
+          </div>
+          <div class="canje-info">
+            <h3>{{ canje.nombre }}</h3>
+            <p>{{ canje.descripcion }}</p>
+            <div class="canje-action">
+              <span class="costo">⭐ {{ canje.costo_puntos }} pts</span>
+              <button 
+                [disabled]="procesando() || (authService.usuarioActual()?.puntos || 0) < canje.costo_puntos"
+                (click)="realizarCanje(canje)">
+                Canjear
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
