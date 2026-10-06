@@ -7,6 +7,7 @@ import { GestionCombosComponent } from './features/admin/gestion-combos/gestion-
 import { HistorialAccionesComponent } from './features/admin/historial-acciones/historial-acciones.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { gerenteGuard } from './core/guards/gerente.guard';
 
 // Subrutas Gestion Peliculas
 import { GpMenuComponent } from './features/admin/gestion-peliculas/components/gp-menu/gp-menu';
@@ -48,7 +49,7 @@ export const routes: Routes = [
     path: 'admin',
     component: LayoutAdminComponent,
     canActivate: [authGuard],
-    canMatch: [adminGuard],
+    canMatch: [gerenteGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', component: HomeComponent },
@@ -78,8 +79,8 @@ export const routes: Routes = [
           { path: 'ver-combos', component: GcVerCombosComponent }
         ]
       },
-      { path: 'historial', component: HistorialAccionesComponent },
-      { path: 'cupones', component: CuponesComponent }
+      { path: 'historial', component: HistorialAccionesComponent, canMatch: [adminGuard] },
+      { path: 'cupones', component: CuponesComponent, canMatch: [adminGuard] }
     ]
   },
   {
@@ -95,12 +96,13 @@ export const routes: Routes = [
       { path: 'carrito', component: CarritoComponent },
       { path: 'mis-reservas', component: MisReservasComponent, canActivate: [authGuard] },
       { path: 'mis-reservas/:id', component: DetalleReservaComponent, canActivate: [authGuard] },
-      { path: 'perfil', component: PerfilUsuarioComponent }
+      { path: 'perfil', component: PerfilUsuarioComponent, canActivate: [authGuard] }
     ]
   },
   {
     path: 'empleado/scanner',
-    component: ScannerComponent
+    component: ScannerComponent,
+    canActivate: [authGuard]
   },
   { path: '**', redirectTo: 'cartelera' }
 ];
