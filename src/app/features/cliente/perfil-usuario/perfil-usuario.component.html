@@ -63,17 +63,17 @@
     </div>
 
     <div class="perfil-actions">
-      @if (authService.usuarioActual()?.rol === 'admin') {
+      @if (authService.usuarioActual()?.role === 'admin') {
         <button style="padding: 10px 20px; background: var(--accent-gold); color: var(--bg-dark); border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">
           ⚙️ Panel de Administrador
         </button>
       }
-      @if (authService.usuarioActual()?.rol === 'gerente') {
+      @if (authService.usuarioActual()?.role === 'gerente') {
         <button style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/admin">
           📊 Panel de Gerente
         </button>
       }
-      @if (authService.usuarioActual()?.rol === 'empleado') {
+      @if (authService.usuarioActual()?.role === 'empleado') {
         <button style="padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-right: 15px;" routerLink="/empleado/scanner">
           📷 Panel de Empleado
         </button>

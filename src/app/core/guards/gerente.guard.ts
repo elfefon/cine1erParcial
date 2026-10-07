@@ -7,7 +7,7 @@ export const gerenteGuard: CanMatchFn = () => {
   const router = inject(Router);
   
   const user = authService.usuarioActual();
-  if (user && (user.rol === 'gerente' || user.rol === 'admin')) {
+  if (user && (user.role === 'gerente' || user.role === 'admin')) {
     return true;
   }
   
