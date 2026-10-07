@@ -92,7 +92,8 @@ export class GcVerCombosComponent {
   /**
    * Elimina un combo permanentemente de la base de datos.
    */
-  async eliminar(id: string) {
+  async eliminar(id: string | undefined) {
+    if (!id) return;
     if (confirm("¿Estás seguro de que deseas eliminar este combo permanentemente?")) {
       const { error } = await this.supabase.client.from('candy_products').delete().eq('id', id);
       if (error) {
