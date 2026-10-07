@@ -38,6 +38,8 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
   butacas = signal<Butaca[]>([]);
   
   warningPreventa = signal('');
+  mensajeExito = signal('');
+  loading = signal(false);
 
   private realtimeChannel: any;
   private myLockedSeatIds: string[] = [];
