@@ -28,12 +28,12 @@ export class HomeComponent implements OnInit {
     // Total recaudado hoy
     const { data: ticketsHoy } = await this.supabase.client
       .from('tickets')
-      .select('precio_total')
+      .select('total')
       .gte('fecha_compra', hoyStr);
     
     let sumaHoy = 0;
     if (ticketsHoy) {
-      sumaHoy = ticketsHoy.reduce((acc, t) => acc + (t.precio_total || 0), 0);
+      sumaHoy = ticketsHoy.reduce((acc, t) => acc + (t.total || 0), 0);
     }
     this.totalRecaudado.set(sumaHoy);
 
@@ -42,15 +42,28 @@ export class HomeComponent implements OnInit {
     this.totalEntradas.set(totalT?.length || 0);
 
     // Película más vista
-    // Para simplificar, obtenemos todos los tickets y agrupamos por pelicula_nombre
-    const { data: tickets } = await this.supabase.client.from('tickets').select('pelicula_nombre');
-    if (tickets && tickets.length > 0) {
+    const { data: reservas } = await this.supabase.client
+      .from('seat_reservations')
+      .select(`
+        showtimes(
+          movies(nombre)
+        )
+      `);
+      
+    if (reservas && reservas.length > 0) {
       const counts: Record<string, number> = {};
-      tickets.forEach(t => {
-        counts[t.pelicula_nombre] = (counts[t.pelicula_nombre] || 0) + 1;
+      reservas.forEach((r: any) => {
+        const movieName = r.showtimes?.movies?.nombre;
+        if (movieName) {
+          counts[movieName] = (counts[movieName] || 0) + 1;
+        }
       });
-      const topPelicula = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-      this.peliculaMasVista.set(topPelicula);
+      if (Object.keys(counts).length > 0) {
+        const topPelicula = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+        this.peliculaMasVista.set(topPelicula);
+      } else {
+        this.peliculaMasVista.set('N/A');
+      }
     } else {
       this.peliculaMasVista.set('N/A');
     }

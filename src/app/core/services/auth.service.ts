@@ -40,7 +40,7 @@ export class AuthService {
       if (data) {
         const usuario: Usuario = {
           ...data,
-          rol: data.role || 'cliente',
+          role: data.role || 'cliente',
           email: user.email || ''
         };
         this.usuarioActual.set(usuario);

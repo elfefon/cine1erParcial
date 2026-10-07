@@ -9,7 +9,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
            [placeholder]="placeholder" 
            [attr.list]="listId"
            [value]="getLabelFromId(seleccionId)"
-           (change)="onSeleccion($event)"
+           (input)="onSeleccion($event)"
            style="margin-bottom: 0; flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
            
     <datalist [id]="listId">

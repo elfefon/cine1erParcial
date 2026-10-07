@@ -42,7 +42,7 @@ export class PeliculasStateService {
 
   // Computed signals
   peliculasDisponiblesParaRecomendar = computed(() => {
-    return this.peliculas().filter(p => !this.recomendadasBorrador().some(r => r.id === p.id) && p.activa);
+    return this.peliculas().filter(p => !this.recomendadasBorrador().some(r => r.id === p.id));
   });
 
   peliculasProximamenteAdmin = computed(() => {

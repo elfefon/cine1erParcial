@@ -1,5 +1,12 @@
 <div class="admin-layout">
-  <aside class="sidebar">
+  <div class="mobile-header" style="display: none;">
+    <a routerLink="/cartelera" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px;">
+      <span class="icon">🎬</span> CineUTN
+    </a>
+    <button class="mobile-toggle" (click)="toggleSidebar()">☰</button>
+  </div>
+
+  <aside class="sidebar" [class.open]="isSidebarOpen()">
     <a routerLink="/cartelera" class="sidebar-brand" style="text-decoration: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 10px;">
       <span class="icon">🎬</span>
       <div>
@@ -10,28 +17,28 @@
     <nav>
       <ul>
         <li>
-          <a routerLink="home" routerLinkActive="active">
+          <a routerLink="home" routerLinkActive="active" (click)="closeSidebar()">
             <span>🏠</span> Home
           </a>
         </li>
         <li>
-          <a routerLink="peliculas" routerLinkActive="active">
+          <a routerLink="peliculas" routerLinkActive="active" (click)="closeSidebar()">
             <span>📹</span> Películas
           </a>
         </li>
         <li>
-          <a routerLink="combos" routerLinkActive="active">
+          <a routerLink="combos" routerLinkActive="active" (click)="closeSidebar()">
             <span>🍿</span> Candy (Combos)
           </a>
         </li>
         @if (authService.usuarioActual()?.rol === 'admin') {
           <li>
-            <a routerLink="historial" routerLinkActive="active">
+            <a routerLink="historial" routerLinkActive="active" (click)="closeSidebar()">
               <span>📋</span> Historial
             </a>
           </li>
           <li>
-            <a routerLink="cupones" routerLinkActive="active">
+            <a routerLink="cupones" routerLinkActive="active" (click)="closeSidebar()">
               <span>🎟️</span> Cupones
             </a>
           </li>

@@ -20,12 +20,12 @@ export class GpCrearPeliculaComponent {
 
   peliculaForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
+    imagen_url: ['', Validators.required],
     sinopsis: ['', Validators.required],
     duracion_min: [0, [Validators.required, Validators.min(1)]],
     restriccion_edad: [0, [Validators.required, Validators.min(0)]],
     generos: ['', Validators.required],
-    fecha_estreno: [''],
-    activa: [true]
+    fecha_estreno: ['']
   });
 
   async importarDesdeTMDB() {
@@ -44,52 +44,23 @@ export class GpCrearPeliculaComponent {
     } catch (e: any) { alert(e.message || 'Error importando.'); }
   }
 
-  selectedFile: File | null = null;
-  uploading = signal(false);
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
-  }
-
   async onSubmit() {
-    if (this.peliculaForm.valid && this.selectedFile) {
-      this.uploading.set(true);
+    if (this.peliculaForm.valid) {
       try {
-        const fileExt = this.selectedFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { data: uploadData, error: uploadError } = await this.supabase.client.storage
-          .from('posters')
-          .upload(filePath, this.selectedFile);
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = this.supabase.client.storage.from('posters').getPublicUrl(filePath);
-
         const rawValues = this.peliculaForm.getRawValue();
         const generosArray = rawValues.generos.split(',').map(g => g.trim()).filter(g => g !== '');
         const pelicula = {
-          nombre: rawValues.nombre, sinopsis: rawValues.sinopsis, imagen_url: publicUrl,
+          nombre: rawValues.nombre, sinopsis: rawValues.sinopsis, imagen_url: rawValues.imagen_url,
           duracion_min: rawValues.duracion_min, restriccion_edad: rawValues.restriccion_edad,
-          generos: generosArray, fecha_estreno: rawValues.fecha_estreno || null, activa: rawValues.activa
+          generos: generosArray, fecha_estreno: rawValues.fecha_estreno || null
         };
         await this.supabase.insertData('movies', pelicula);
         await this.state.cargarPeliculas();
         await this.state.registrarAccion('CREATE_MOVIE');
         this.router.navigate(['/admin/peliculas/menu']);
       } catch (e: any) {
-        alert(e.message || 'Error al subir la película');
-      } finally {
-        this.uploading.set(false);
+        alert(e.message || 'Error al crear la película');
       }
-    } else if (!this.selectedFile) {
-      alert("Debes seleccionar una imagen para el póster.");
     }
   }
 }

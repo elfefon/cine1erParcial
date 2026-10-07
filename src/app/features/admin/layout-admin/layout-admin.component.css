@@ -113,11 +113,39 @@
   .admin-layout {
     flex-direction: column;
   }
+  .mobile-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #0d1322;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .mobile-toggle {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: white;
+    font-size: 1.5rem;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
   .sidebar {
     width: 100%;
-    position: relative;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    z-index: 100;
+    display: none;
+    height: calc(100vh - 60px);
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar.open {
+    display: flex;
+  }
+  .sidebar-brand {
+    display: none;
   }
   .content {
     margin-left: 0;

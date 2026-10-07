@@ -21,9 +21,9 @@
         <input type="text" formControlName="nombre">
       </div>
       <div class="form-group">
-        <label>Póster de la Película</label>
-        <input type="file" accept="image/*" (change)="onFileSelected($event)">
-        <small style="color: var(--text-muted); display: block; margin-top: 5px;">Selecciona una imagen para subirla al servidor.</small>
+        <label>URL del Póster</label>
+        <input type="text" formControlName="imagen_url">
+        <small style="color: var(--text-muted); display: block; margin-top: 5px;">Pegá acá el link a la imagen de la película.</small>
       </div>
       <div class="form-group full-width">
         <label>Sinopsis</label>
@@ -45,13 +45,9 @@
         <label>Estreno (Opcional)</label>
         <input type="date" formControlName="fecha_estreno">
       </div>
-      <div class="form-group full-width checkbox-group">
-        <input type="checkbox" id="activa" formControlName="activa">
-        <label for="activa">Película activa en cartelera</label>
-      </div>
     </div>
-    <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid || !selectedFile || uploading()">
-      {{ uploading() ? '⏳ Subiendo...' : '💾 Guardar Película' }}
+    <button type="submit" class="btn-save" [disabled]="peliculaForm.invalid">
+      💾 Guardar Película
     </button>
   </form>
 </div>
