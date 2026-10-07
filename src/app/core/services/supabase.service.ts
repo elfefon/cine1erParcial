@@ -241,8 +241,9 @@ export class SupabaseService {
       const { data: { user } } = await this._supabase.auth.getUser();
       if (user) {
         // Obtenemos rol para ver si es admin
-        const { data: profile } = await this._supabase.from('profiles').select('rol').eq('id', user.id).single();
-        if (!profile || !['admin', 'gerente'].includes(profile.rol)) {
+        const { data: profile } = await this._supabase.from('profiles').select('rol, role').eq('id', user.id).single();
+        const userRol = profile?.rol || profile?.role;
+        if (!profile || !['admin', 'gerente'].includes(userRol)) {
           if (table === 'profiles') {
             query = query.eq('id', user.id);
           } else {
