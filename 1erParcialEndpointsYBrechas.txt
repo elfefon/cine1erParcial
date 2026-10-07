@@ -1,0 +1,290 @@
+================================================================================
+1erParcialEndpointsYBrechas.txt
+Proyecto: CineUTN (cine1erParcial) - Programación 4
+Documento complementario de 1erParcialExplicacion.txt (secciones 12 y 15).
+Catálogo de endpoints consumidos por la app y brechas detectadas entre lo que
+el front llama y lo que el backend expone/garantiza.
+Alcance: solo lo verificado en el código fuente (citas archivo:línea).
+===============================================================================
+
+0. CÓMO LEER ESTE DOCUMENTO
+  - "ENDPOINT" = cualquier dirección expuesta hacia fuera (PostgREST, Auth,
+    RPC, Realtime, Storage, HTTP externo).
+  - Estado posible: OK (usado y funcional), PARCIAL (usado pero con
+    limitaciones/inconsistencias), HUÉRFANO (código lo llama sin contraparte
+    efectiva), FALTA (pendiente por negocio).
+  - La referencia de cortes es 1erParcialExplicacion.txt (v2, 06/10/2026).
+
+================================================================================
+1. AUTH (Supabase Auth — SDK @supabase/supabase-js)
+================================================================================
+
+  auth.signInWithPassword({email, password})
+    Uso: login.component (auth.service signIn, :53).
+    Estado: OK. El flujo carga el perfil (profiles) y publica el signal
+    usuarioActual.
+
+  auth.signUp({email, password, options:{data:{nombre, fecha_nacimiento,
+    tipo_sangre, color_ojos, vacaciones_anuales}}})
+    Uso: registro.component (auth.service signUp, :59). Post-registro: inserta
+    profiles.role='cliente' y crea el cupón BIENVENIDO-<6 UUID> (20%,
+    primera compra, edad 0+).
+    Estado: OK. OJO: el cupón solo existe si existe la tabla coupons + la
+    fila activa; el cliente jamás lo ve si no ingresa el código.
+
+  auth.signOut()
+    Uso: auth.service signOut :117; logout() de perfil y layout-admin.
+    Estado: OK.
+
+  auth.onAuthStateChange(listener) + auth.getSession()
+    Uso: auth.service constructor initSession (sincroniza sesión al arrancar).
+    Estado: OK.
+
+  auth.updateUser / auth.resetPasswordForEmail / auth.sendMagicLink
+    NO usados en el código (el magic link de invitados se resuelve solo con
+    guest_purchases.magic_link_token, sin email de envío).
+    Estado: FALTA (ver brechas B-01).
+
+================================================================================
+2. POSTGREST (tablas — Rutas REST implícitas del cliente de Supabase)
+================================================================================
+
+  Sobre movies:
+    SELECT  cartelera (9.2), detalle-pelicula (9.3), perfil (9.9),
+            peliculas-state :23, proximamente (9.10), reserva-butacas.
+    INSERT  gp-crear-pelicula (TMDB/manual; estado activa).
+    UPDATE  gp-recomendaciones (recomendada), gp-proximamente
+            (imagen_apaisada_url); RPC comprar_checkout (ventas_totales).
+    Estado: OK. Brecha nomenclatura: la UI usa movies.activa mientras
+    deleteData borra con activo (ver 1erParcialExplicacion 17 n).
+
+  Sobre rooms:
+    SELECT  peliculas-state (cargarSalas), salas.ts :47.
+    INSERT/UPDATE/DELETE físico  salas.ts guardar (:114/123) y eliminar (:141).
+    Estado: OK. Usa filas/columnas/estado (no asientos_*).
+
+  Sobre showtimes:
+    SELECT  peliculas-state :34, detalle-pelicula, reserva-butacas,
+            proximamente, modificar-funcion.
+    INSERT  gp-crear-funcion (con es_preventa).
+    UPDATE/DELETE lógico  modificar-funcion (deleteData → activo:false).
+    Estado: OK. Brechas: el DELETE por UI queda auditado como UPDATE_SHOWTIME
+    (17 l); la columna de borrado de mismas tablas es `activo`.
+
+  Sobre seats:
+    SELECT  reserva-butacas (carga de la sala), carrito/RPC (por
+            numero_butaca al confirmar).
+    Estado: PARCIAL. La grilla se posiciona con obtenerFila() pero lo que la
+    RPC resuelve es por numero_butaca; no hay escritura de seats por UI
+    (el CRUD de salas no regenera butacas).
+
+  Sobre seat_reservations:
+    SELECT  reserva-butacas (ocupadas), modificar-funcion (conteo ventas),
+            mis-reservas/detalle-reserva (joins), scanner (detalles).
+    INSERT  vía RPC comprar_checkout (masivo; unique(showtime_id, seat_id)).
+    DELETE  detalle-reserva cancelarReserva :95.
+    Estado: OK. Brecha: precio_pagado = precio BASE sin multiplicadores (17 a).
+
+  Sobre locked_seats:
+    SELECT/INSERT/DELETE  reserva-butacas (select al cargar, insert al
+            seleccionar, delete al deseleccionar y en ngOnDestroy).
+    Estado: PARCIAL. Realtime cubre INSERT/DELETE (ver 4), pero NO se purgan
+    al concretar una compra (17 e).
+
+  Sobre tickets:
+    INSERT  vía RPC comprar_checkout (id, user_id, total_pagado, estado,
+            idempotency_key, magic_token...).
+    SELECT  mis-reservas :34, detalle-reserva :30, scanner :55, perfil :47.
+    UPDATE  detalle-reserva (estado='cancelado'); RPC validar_qr (estado
+            'usado').
+    Estado: PARCIAL. Los de invitado (user_id null) no se listan en
+    mis-reservas (17 d).
+
+  Sobre ticket_candy_items:
+    INSERT  vía RPC comprar_checkout.
+    SELECT  mis-reservas, detalle-reserva, scanner.
+    Estado: OK.
+
+  Sobre candy_products:
+    SELECT  combos-state :23 (separa por categoria), candy, mis-reservas.
+    INSERT/UPDATE  gc-crear-producto/combo y gc-ver-* (recalcula costo_puntos).
+    Estado: OK. Brecha: detección de combo por prefijo en candy, no por
+    categoria (17 o).
+
+  Sobre coupons:
+    INSERT  auth.service (cupón de bienvenida).
+    SELECT/INSERT/UPDATE/DELETE  cupones.component (CRUD admin).
+    Redención  vía RPC comprar_checkout (p_cupon_codigo + límite cupon_usos).
+    Estado: OK.
+
+  Sobre profiles:
+    SELECT  auth.service loadUserProfile, perfil-usuario, historial (join).
+    INSERT  auth.service (registro).
+    UPDATE  RPC comprar_checkout (puntos/credito_saldo); detalle-reserva
+            (credito_saldo += total cancelado).
+    Estado: OK. getTableData aplica scope por usuario salvo admin/gerente.
+
+  Sobre reviews:
+    SELECT  detalle-pelicula (con join profiles para el nombre).
+    INSERT  perfil-usuario (tras verificar unicidad movie+user, no UPSERT).
+    Estado: OK.
+
+  Sobre puntos_movimientos:
+    INSERT  vía RPC comprar_checkout (tipo 'acumulacion'|'canje').
+    SELECT  perfil-usuario (historial).
+    Estado: OK.
+
+  Sobre guest_purchases:
+    INSERT  vía RPC comprar_checkout (solo si user_id es null).
+    SELECT  NUNCA (el front no la consulta: el magic link quedó sin flujo).
+    Estado: HUÉRFANO parcial (se escribe, no se lee).
+
+  Sobre movie_subscriptions:
+    UPSERT  proximamente activarAlerta (onConflict movie_id+user_id).
+    SELECT/DELETE  layout-cliente (campana de notificaciones).
+    Estado: OK. No hay integración con email (decisión).
+
+  Sobre activity_logs:
+    INSERT  peliculas-state :65 y combos-state :29 (registrarAccion).
+    SELECT  historial-acciones (+ export PDF/Excel).
+    Estado: PARCIAL. No auditan cupones, salas, recomendaciones ni backdrop
+    (17 m).
+
+================================================================================
+3. RPCs (funciones de base de datos — Postgres)
+================================================================================
+
+  comprar_checkout
+    Invocación: carrito.component.ts :124 — payload con p_user_id,
+    p_email_invitado, p_tickets, p_candy, p_usa_saldo, p_usa_puntos,
+    p_cupon_codigo, p_idempotency_key.
+    Devuelve: {success, main_ticket_id, magic_token}.
+    Garantías esperadas (contrato): SECURITY DEFINER; transacción; UNIQUE en
+    tickets.idempotency_key; unique(showtime_id,seat_id); cupón con
+    es_primera_compra/edad/límite; puntos acumulados floor(total/5);
+    ventas_totales++; guest_purchases para invitados.
+    Estado: OK en front. Brechas: el front no consume la respuesta (solo
+    toast/navega); la compra solo-candy está bloqueada antes por regla de
+    negocio; el 20% de edad está duplicado en front y en la RPC.
+    NOTA: por contrato no purga locked_seats (brecha e).
+
+  validar_qr
+    Invocación: scanner.ts :30 — { p_codigo }.
+    Devuelve: {success, ticket_id, showtime, reason} con reason ∈
+    {already_used, cancelled, too_early, too_late, not_found/invalid}.
+    Estado: OK. Brecha: la ruta /empleado/scanner exige solo authGuard
+    (cualquier rol puede validar) y en el SELECT posterior de detalles no
+    viene la relación seats (butacas → 'X').
+
+  obtener_top_peliculas / obtener_top_candy / obtener_facturacion
+    Invocaciones: grafico-peliculas.ts :53, grafico-candy.ts :51,
+    grafico-finanzas.ts :51 — todas con {fecha_inicio, fecha_fin}.
+    Estado: OK. Brechas: el Chart no se destruye al desmontar (sin OnDestroy);
+    el export PDF/Excel SÍ está implementado (f00bb82).
+
+  TMDB (externo, cliente):
+    buscarEImportarPeliculaPorNombre(nombre) → supabase.service.ts :166
+    (fetch a api.themoviedb.org/3/search/movie + import insert).
+    importarPelicula(tmdbId) → :199.
+    Estado: OK. Brechas: depende de la key environment.tmbd_key (README la
+    documenta como tmdbKey — discrepancia de nomenclatura); sin manejo de
+    rate-limit/fallback de imágenes.
+
+================================================================================
+4. REALTIME (canales postgres_changes)
+================================================================================
+
+  Canal UDP restringido al proyecto: `locked_seats_<showtimeId>`
+    - reserva-butacas.ts :161-183:
+        .on INSERT locked_seats (filter showtime_id=eq.<id>) → marca ocupada
+        .on DELETE locked_seats (filter showtime_id=eq.<id>) → libera
+        .on INSERT seat_reservations (filter showtime_id=eq.<id>) → ocupada
+    - Se cierra en ngOnDestroy con removeChannel + DELETE de los locks propios.
+    Estado: OK. Brechas: no hay subscripción a cambios en tickets/showtimes
+    para refrescar de la grilla; los locks ajenos a la función no se sanean.
+
+================================================================================
+5. STORAGE (Supabase Storage)
+================================================================================
+
+  Bucket público `posters`
+    - gp-crear-pelicula.ts :73 storage.from('posters').upload(path, file);
+      name = Date.now()_rand.ext.
+    - :75 storage.from('posters').getPublicUrl(path) → movies.imagen_url.
+    Estado: OK. Discrepancias: solo se usa en la carga manual (la importación
+    TMDB sigue trayendo URL remota); no hay borrado de objetos al eliminar la
+    película (no existe UI de borrado con su objeto).
+
+================================================================================
+6. ENTRYPOINTS DE DEPLOY / PWA
+================================================================================
+
+  - Firebase Hosting: proyecto `erparcial-f1709` (hosting de la SPA).
+  - Service worker: ngsw-config.json (registrado en app.config con
+    registerWhenStable:30000); manifest.webmanifest + íconos en public/.
+    Estado: OK básico. Brechas: sin estrategias de caché propias (precache por
+    defecto); no se validan íconos/start_url; el @media print del ticket no
+    garantiza fuentes offline.
+
+================================================================================
+7. HTTP EXTERNO (externo, no-controlado)
+================================================================================
+
+  - api.themoviedb.org/3/* (búsqueda y detalles de películas; ver 3-TMDB).
+  - https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=... en
+    detalle-reserva.html (:28-31) para renderizar el QR como IMG.
+    Estado: PARCIAL. Depende de un servicio de terceros (no hay fallback si
+    api.qrserver está caído ni QR generado localmente).
+
+================================================================================
+8. BRECHAS DETECTADAS (cruzado con 1erParcialExplicacion.txt §17)
+================================================================================
+
+  B-01  Invitados: el checkout crea guest_purchases.magic_link_token, pero NO
+        hay endpoint/flujo que lo consuma ni email de envío → compra anónima
+        "semi-huérfana" (ticket invisible en mis-reservas).
+  B-02  locked_seats: la compra no los purga (solo ngOnDestroy) → la butaca
+        puede quedar "ocupada" hasta recargar.
+  B-03  Precios: precio_pagado guarda el base (sin VIP ×2 ni accesible ×1.5);
+        el 20% por edad está duplicado (front + RPC).
+  B-04  Auditoría: cupones, salas, recomendaciones, backdrop de preventa no
+        emiten activity_logs; borrar función audita UPDATE_SHOWTIME.
+  B-05  Roles: /empleado/scanner solo exige authGuard (cualquier rol);
+        gerente llega a /admin pero el sidebar oculta administración admin.
+  B-06  Realtime: sin refresco de tickets/showtimes (solo locked_seats y
+        seat_reservations); los gráficos no destruyen el Chart.
+  B-07  Storage: pósters subidos sin ciclo de vida (no se borran con la
+        película; unicidad del nombre por timestamp+rand, sin mensaje de
+        duplicados).
+  B-08  Cupón de bienvenida: se crea en auth.service pero no hay UI de
+        "ver mi cupón"; el checkout sí lo puede redimir (contrato).
+  B-09  PWA: precache por defecto; no se verifican íconos/start_url.
+  B-10  Dependencias externas: QR (qrserver) y TMDB sin fallback/offline.
+
+================================================================================
+9. TRAZABILIDAD FUNCIONAL → ENDPOINTS (resumen)
+================================================================================
+
+  Funcionalidad                          Principal(es)              Referencia
+  -------------------------------------------------------------------------------
+  Login / Registro (+ cupón bienvenida)  auth.signUp/signIn, auth.ts :53-59
+  Catálogo y detalle                    movies SELECT, reviews      9.2/9.3
+  Cartelera de hoy / top/recomendadas   movies (ventas_totales)     cartelera
+  Reserva + locks en vivo               seats/locked_seats + RTL    reserva
+  Pre-ventas y alertas                  showtimes/es_preventa +     proximamente
+                                         movie_subscriptions
+  Checkout (cliente cta/invitado)       RPC comprar_checkout        carrito :124
+  Puntos/saldo/cupones                  profiles + puntos_movim +   perfil/checkout
+                                         coupons/cupon_usos
+  Mis reservas / cancelación            tickets + seat_reserv +     mis-reservas /
+                                         profiles (saldo)            detalle-reserva
+  Calificar películas                   reviews                     perfil :122
+  Gestión películas/funciones/salas     movies/showtimes/rooms +    admin (10.x)
+                                         activity_logs + storage     posters
+  Gestión candy (productos/combos)      candy_products + auditoría  admin (10.18-)
+  Dashboard gerencial + exports         RPCs obtener_* + jspdf/xlsx 10.2-10.5/10.8
+  Validación de accesos (empleado)      RPC validar_qr              scanner :30
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================

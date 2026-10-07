@@ -10,7 +10,12 @@
           <td><span class="badge">{{ p.categoria }}</span></td>
           <td><span class="price-tag">${{ p.precio }}</span></td>
           <td>{{ p.costo_puntos }} pts</td>
-          <td><button class="btn-modificar" (click)="abrirModificar(p)">Modificar</button></td>
+          <td>
+            <div style="display: flex; gap: 5px;">
+              <button class="btn-modificar" (click)="abrirModificar(p)">Modificar</button>
+              <button class="btn-remove" (click)="eliminar(p.id)" style="padding: 5px 10px;">Eliminar</button>
+            </div>
+          </td>
         </tr>
       } @empty {
         <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No hay productos registrados aún.</td></tr>

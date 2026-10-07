@@ -38,18 +38,43 @@ export class GcVerCombosComponent {
     return this.state.productos().filter(p => p.nombre.toLowerCase().includes(s));
   });
 
+  /**
+   * Filtra los productos disponibles para agregar al combo basándose en el input local del modal.
+   * @param e Evento del input
+   */
   onBuscarProd(e: Event) { this.filtroProd.set((e.target as HTMLInputElement).value); }
+
+  /**
+   * Agrega un nuevo producto a la lista temporal del combo que se está editando.
+   * @param p Producto a agregar
+   */
   agregar(p: any) { this.productosEdit.update(l => [...l, p]); }
+
+  /**
+   * Elimina un producto de la lista temporal del combo que se está editando por su índice.
+   * @param index Posición a eliminar
+   */
   quitar(index: number) { this.productosEdit.update(l => { const n = [...l]; n.splice(index, 1); return n; }); }
 
+  /**
+   * Abre el modal de edición y precarga el formulario con los datos del combo.
+   * @param c El combo seleccionado para editar
+   */
   abrirModificar(c: any) {
     this.comboEditando.set(c);
     this.productosEdit.set(c.productos_incluidos || []);
     this.comboEditForm.patchValue({ id: c.id, nombre: c.nombre, precio: c.precio });
   }
 
+  /**
+   * Cierra el modal de edición.
+   */
   cerrarModificar() { this.comboEditando.set(null); }
 
+  /**
+   * Guarda las modificaciones realizadas al combo en la base de datos de Supabase.
+   * Actualiza el nombre, precio, productos incluidos y el costo en puntos (calculado automáticamente a 1/5 del precio).
+   */
   async guardarModificacion() {
     if (this.comboEditForm.valid && this.productosEdit().length > 0) {
       const data = this.comboEditForm.getRawValue();
@@ -62,6 +87,20 @@ export class GcVerCombosComponent {
       await this.state.registrarAccion('UPDATE_COMBO');
     } else if (this.productosEdit().length === 0) {
       alert('Debes agregar al menos un producto al combo.');
+    }
+  }
+  /**
+   * Elimina un combo permanentemente de la base de datos.
+   */
+  async eliminar(id: string) {
+    if (confirm("¿Estás seguro de que deseas eliminar este combo permanentemente?")) {
+      const { error } = await this.supabase.client.from('candy_products').delete().eq('id', id);
+      if (error) {
+        alert("Error al eliminar el combo: " + error.message);
+      } else {
+        await this.state.cargarCombos();
+        await this.state.registrarAccion('DELETE_COMBO');
+      }
     }
   }
 }

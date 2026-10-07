@@ -13,7 +13,12 @@
             }
           </td>
           <td><span class="price-tag">${{ c.precio }}</span></td>
-          <td><button class="btn-modificar" (click)="abrirModificar(c)">Modificar</button></td>
+          <td>
+            <div style="display: flex; gap: 5px;">
+              <button class="btn-modificar" (click)="abrirModificar(c)">Modificar</button>
+              <button class="btn-remove" (click)="eliminar(c.id)" style="padding: 5px 10px;">Eliminar</button>
+            </div>
+          </td>
         </tr>
       } @empty {
         <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">No hay combos armados.</td></tr>

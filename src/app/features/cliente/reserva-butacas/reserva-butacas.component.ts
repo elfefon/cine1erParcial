@@ -37,8 +37,6 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
   
   butacas = signal<Butaca[]>([]);
   
-  loading = signal(false);
-  mensajeExito = signal('');
   warningPreventa = signal('');
 
   private realtimeChannel: any;
@@ -46,21 +44,6 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
 
   precioBase = computed(() => {
     let base = this.showtimeRaw()?.precio_base || 5000;
-    
-    // T7.1: Descuento por edad
-    const user = this.auth.usuarioActual();
-    if (user && user.fecha_nacimiento) {
-      const fechaNac = new Date(user.fecha_nacimiento);
-      const hoy = new Date();
-      let age = hoy.getFullYear() - fechaNac.getFullYear();
-      if (hoy.getMonth() < fechaNac.getMonth() || (hoy.getMonth() === fechaNac.getMonth() && hoy.getDate() < fechaNac.getDate())) {
-        age--;
-      }
-      
-      if (age < 12 || age > 65) {
-        base = base * 0.8; // 20% descuento
-      }
-    }
     return base;
   });
 
@@ -160,6 +143,7 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     this.realtimeChannel = this.supabase.client
       .channel(`locked_seats_${showtime}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'locked_seats', filter: `showtime_id=eq.${showtime}` }, payload => {
+          // se selecciono una butaca por otro usuario
         const newLock = payload.new as any;
         const currentUser = this.auth.usuarioActual();
         if (!currentUser || newLock.user_id !== currentUser.id) {
@@ -172,6 +156,7 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'locked_seats', filter: `showtime_id=eq.${showtime}` }, payload => {
+        // se desbloqueo una butaca
         const oldLock = payload.old as any;
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === oldLock.seat_id);
@@ -180,6 +165,7 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
         });
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'seat_reservations', filter: `showtime_id=eq.${showtime}` }, payload => {
+        // se reservo una butaca
         const newRes = payload.new as any;
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === newRes.seat_id);
