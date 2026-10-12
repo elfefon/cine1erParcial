@@ -1,109 +1,156 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/login/login.component';
-import { RegistroComponent } from './features/auth/registro/registro.component';
-import { LayoutAdminComponent } from './features/admin/layout-admin/layout-admin.component';
-import { GestionPeliculasComponent } from './features/admin/gestion-peliculas/gestion-peliculas.component';
-import { GestionCombosComponent } from './features/admin/gestion-combos/gestion-combos.component';
-import { HistorialAccionesComponent } from './features/admin/historial-acciones/historial-acciones.component';
-import { CuponesComponent } from './features/admin/cupones/cupones.component';
-import { SalasComponent } from './features/admin/salas/salas';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { gerenteGuard } from './core/guards/gerente.guard';
 
-// Subrutas Gestion Peliculas
-import { GpMenuComponent } from './features/admin/gestion-peliculas/components/gp-menu/gp-menu';
-import { GpCrearPeliculaComponent } from './features/admin/gestion-peliculas/components/gp-crear-pelicula/gp-crear-pelicula';
-import { GpVerPeliculasComponent } from './features/admin/gestion-peliculas/components/gp-ver-peliculas/gp-ver-peliculas';
-import { GpRecomendacionesComponent } from './features/admin/gestion-peliculas/components/gp-recomendaciones/gp-recomendaciones';
-import { GpProximamenteComponent } from './features/admin/gestion-peliculas/components/gp-proximamente/gp-proximamente';
-import { GpCrearFuncionComponent } from './features/admin/gestion-peliculas/components/gp-crear-funcion/gp-crear-funcion';
-import { GpVerFuncionesComponent } from './features/admin/gestion-peliculas/components/gp-ver-funciones/gp-ver-funciones';
-
-// Subrutas Gestion Combos
-import { GcMenuComponent } from './features/admin/gestion-combos/components/gc-menu/gc-menu';
-import { GcCrearProductoComponent } from './features/admin/gestion-combos/components/gc-crear-producto/gc-crear-producto';
-import { GcVerProductosComponent } from './features/admin/gestion-combos/components/gc-ver-productos/gc-ver-productos';
-import { GcCrearComboComponent } from './features/admin/gestion-combos/components/gc-crear-combo/gc-crear-combo';
-import { GcVerCombosComponent } from './features/admin/gestion-combos/components/gc-ver-combos/gc-ver-combos';
-
-import { LayoutClienteComponent } from './features/cliente/layout-cliente/layout-cliente.component';
-import { CarteleraComponent } from './features/cliente/cartelera/cartelera.component';
-import { DetallePeliculaComponent } from './features/cliente/detalle-pelicula/detalle-pelicula.component';
-import { ReservaButacasComponent } from './features/cliente/reserva-butacas/reserva-butacas.component';
-import { CandyComponent } from './features/cliente/candy/candy.component';
-import { CarritoComponent } from './features/cliente/carrito/carrito.component';
-import { PerfilUsuarioComponent } from './features/cliente/perfil-usuario/perfil-usuario.component';
-
-import { HomeComponent } from './features/admin/home/home.component';
-
-import { ProximamenteComponent } from './features/cliente/proximamente/proximamente';
-import { MisReservasComponent } from './features/cliente/mis-reservas/mis-reservas.component';
-import { DetalleReservaComponent } from './features/cliente/detalle-reserva/detalle-reserva.component';
-
-import { ScannerComponent } from './features/empleado/scanner/scanner';
-
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'registro', component: RegistroComponent },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'registro',
+    loadComponent: () => import('./features/auth/registro/registro.component').then(m => m.RegistroComponent)
+  },
   {
     path: 'admin',
-    component: LayoutAdminComponent,
+    loadComponent: () => import('./features/admin/layout-admin/layout-admin.component').then(m => m.LayoutAdminComponent),
     canActivate: [authGuard],
     canMatch: [gerenteGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: 'home', component: HomeComponent },
+      {
+        path: 'home',
+        loadComponent: () => import('./features/admin/home/home.component').then(m => m.HomeComponent)
+      },
       { 
         path: 'peliculas', 
-        component: GestionPeliculasComponent,
+        loadComponent: () => import('./features/admin/gestion-peliculas/gestion-peliculas.component').then(m => m.GestionPeliculasComponent),
         children: [
           { path: '', redirectTo: 'menu', pathMatch: 'full' },
-          { path: 'menu', component: GpMenuComponent },
-          { path: 'crear-pelicula', component: GpCrearPeliculaComponent },
-          { path: 'ver-peliculas', component: GpVerPeliculasComponent },
-          { path: 'recomendaciones', component: GpRecomendacionesComponent },
-          { path: 'proximamente', component: GpProximamenteComponent },
-          { path: 'crear-funcion', component: GpCrearFuncionComponent },
-          { path: 'ver-funciones', component: GpVerFuncionesComponent }
+          {
+            path: 'menu',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-menu/gp-menu').then(m => m.GpMenuComponent)
+          },
+          {
+            path: 'crear-pelicula',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-crear-pelicula/gp-crear-pelicula').then(m => m.GpCrearPeliculaComponent)
+          },
+          {
+            path: 'ver-peliculas',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-ver-peliculas/gp-ver-peliculas').then(m => m.GpVerPeliculasComponent)
+          },
+          {
+            path: 'recomendaciones',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-recomendaciones/gp-recomendaciones').then(m => m.GpRecomendacionesComponent)
+          },
+          {
+            path: 'proximamente',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-proximamente/gp-proximamente').then(m => m.GpProximamenteComponent)
+          },
+          {
+            path: 'crear-funcion',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-crear-funcion/gp-crear-funcion').then(m => m.GpCrearFuncionComponent)
+          },
+          {
+            path: 'ver-funciones',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-ver-funciones/gp-ver-funciones').then(m => m.GpVerFuncionesComponent)
+          }
         ]
       },
       { 
         path: 'combos', 
-        component: GestionCombosComponent,
+        loadComponent: () => import('./features/admin/gestion-combos/gestion-combos.component').then(m => m.GestionCombosComponent),
         children: [
           { path: '', redirectTo: 'menu', pathMatch: 'full' },
-          { path: 'menu', component: GcMenuComponent },
-          { path: 'crear-producto', component: GcCrearProductoComponent },
-          { path: 'ver-productos', component: GcVerProductosComponent },
-          { path: 'crear-combo', component: GcCrearComboComponent },
-          { path: 'ver-combos', component: GcVerCombosComponent }
+          {
+            path: 'menu',
+            loadComponent: () => import('./features/admin/gestion-combos/components/gc-menu/gc-menu').then(m => m.GcMenuComponent)
+          },
+          {
+            path: 'crear-producto',
+            loadComponent: () => import('./features/admin/gestion-combos/components/gc-crear-producto/gc-crear-producto').then(m => m.GcCrearProductoComponent)
+          },
+          {
+            path: 'ver-productos',
+            loadComponent: () => import('./features/admin/gestion-combos/components/gc-ver-productos/gc-ver-productos').then(m => m.GcVerProductosComponent)
+          },
+          {
+            path: 'crear-combo',
+            loadComponent: () => import('./features/admin/gestion-combos/components/gc-crear-combo/gc-crear-combo').then(m => m.GcCrearComboComponent)
+          },
+          {
+            path: 'ver-combos',
+            loadComponent: () => import('./features/admin/gestion-combos/components/gc-ver-combos/gc-ver-combos').then(m => m.GcVerCombosComponent)
+          }
         ]
       },
-      { path: 'historial', component: HistorialAccionesComponent, canMatch: [adminGuard] },
-      { path: 'cupones', component: CuponesComponent, canMatch: [adminGuard] },
-      { path: 'salas', component: SalasComponent, canMatch: [adminGuard] }
+      {
+        path: 'historial',
+        loadComponent: () => import('./features/admin/historial-acciones/historial-acciones.component').then(m => m.HistorialAccionesComponent),
+        canMatch: [adminGuard]
+      },
+      {
+        path: 'cupones',
+        loadComponent: () => import('./features/admin/cupones/cupones.component').then(m => m.CuponesComponent),
+        canMatch: [adminGuard]
+      },
+      {
+        path: 'salas',
+        loadComponent: () => import('./features/admin/salas/salas').then(m => m.SalasComponent),
+        canMatch: [adminGuard]
+      }
     ]
   },
   {
     path: '',
-    component: LayoutClienteComponent,
+    loadComponent: () => import('./features/cliente/layout-cliente/layout-cliente.component').then(m => m.LayoutClienteComponent),
     children: [
       { path: '', redirectTo: 'cartelera', pathMatch: 'full' },
-      { path: 'cartelera', component: CarteleraComponent },
-      { path: 'proximamente', component: ProximamenteComponent },
-      { path: 'pelicula/:id', component: DetallePeliculaComponent },
-      { path: 'reserva/:id', component: ReservaButacasComponent },
-      { path: 'candy', component: CandyComponent },
-      { path: 'carrito', component: CarritoComponent },
-      { path: 'mis-reservas', component: MisReservasComponent, canActivate: [authGuard] },
-      { path: 'mis-reservas/:id', component: DetalleReservaComponent, canActivate: [authGuard] },
-      { path: 'perfil', component: PerfilUsuarioComponent, canActivate: [authGuard] }
+      {
+        path: 'cartelera',
+        loadComponent: () => import('./features/cliente/cartelera/cartelera.component').then(m => m.CarteleraComponent)
+      },
+      {
+        path: 'proximamente',
+        loadComponent: () => import('./features/cliente/proximamente/proximamente').then(m => m.ProximamenteComponent)
+      },
+      {
+        path: 'pelicula/:id',
+        loadComponent: () => import('./features/cliente/detalle-pelicula/detalle-pelicula.component').then(m => m.DetallePeliculaComponent)
+      },
+      {
+        path: 'reserva/:id',
+        loadComponent: () => import('./features/cliente/reserva-butacas/reserva-butacas.component').then(m => m.ReservaButacasComponent)
+      },
+      {
+        path: 'candy',
+        loadComponent: () => import('./features/cliente/candy/candy.component').then(m => m.CandyComponent)
+      },
+      {
+        path: 'carrito',
+        loadComponent: () => import('./features/cliente/carrito/carrito.component').then(m => m.CarritoComponent)
+      },
+      {
+        path: 'mis-reservas',
+        loadComponent: () => import('./features/cliente/mis-reservas/mis-reservas.component').then(m => m.MisReservasComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'mis-reservas/:id',
+        loadComponent: () => import('./features/cliente/detalle-reserva/detalle-reserva.component').then(m => m.DetalleReservaComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./features/cliente/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent),
+        canActivate: [authGuard]
+      }
     ]
   },
   {
     path: 'empleado/scanner',
-    component: ScannerComponent,
+    loadComponent: () => import('./features/empleado/scanner/scanner').then(m => m.ScannerComponent),
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: 'cartelera' }
