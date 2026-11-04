@@ -10,36 +10,58 @@
     <a routerLink="/cartelera" class="sidebar-brand" style="text-decoration: none; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 10px;">
       <span class="icon">🎬</span>
       <div>
-        <h3 style="margin: 0;">CineUTN <span class="admin-badge">{{ authService.usuarioActual()?.role === 'admin' ? 'Admin' : 'Gerente' }}</span></h3>
+        <h3 style="margin: 0;">CineUTN <span class="admin-badge">{{ authService.usuarioActual()?.role || 'Staff' }}</span></h3>
       </div>
     </a>
 
     <nav>
       <ul>
-        <li>
-          <a routerLink="home" routerLinkActive="active" (click)="closeSidebar()">
-            <span>🏠</span> Home
-          </a>
-        </li>
-        <li>
-          <a routerLink="peliculas" routerLinkActive="active" (click)="closeSidebar()">
-            <span>📹</span> Películas
-          </a>
-        </li>
-        <li>
-          <a routerLink="combos" routerLinkActive="active" (click)="closeSidebar()">
-            <span>🍿</span> Candy (Combos)
-          </a>
-        </li>
-        @if (authService.usuarioActual()?.role === 'admin') {
+        @if (tieneAccesoSeccion('reportes')) {
+          <li>
+            <a routerLink="home" routerLinkActive="active" (click)="closeSidebar()">
+              <span>📊</span> Home / Reportes
+            </a>
+          </li>
+        }
+        @if (tieneAccesoSeccion('peliculas')) {
+          <li>
+            <a routerLink="peliculas" routerLinkActive="active" (click)="closeSidebar()">
+              <span>📹</span> Películas
+            </a>
+          </li>
+        }
+        @if (tieneAccesoSeccion('combos')) {
+          <li>
+            <a routerLink="combos" routerLinkActive="active" (click)="closeSidebar()">
+              <span>🍿</span> Candy (Combos)
+            </a>
+          </li>
+        }
+        @if (tieneAccesoSeccion('salas')) {
+          <li>
+            <a routerLink="salas" routerLinkActive="active" (click)="closeSidebar()">
+              <span>🪑</span> Salas
+            </a>
+          </li>
+        }
+        @if (tieneAccesoSeccion('cupones')) {
+          <li>
+            <a routerLink="cupones" routerLinkActive="active" (click)="closeSidebar()">
+              <span>🎟️</span> Cupones
+            </a>
+          </li>
+        }
+        @if (tieneAccesoSeccion('historial')) {
           <li>
             <a routerLink="historial" routerLinkActive="active" (click)="closeSidebar()">
               <span>📋</span> Historial
             </a>
           </li>
+        }
+        @if (tieneAccesoSeccion('roles')) {
           <li>
-            <a routerLink="cupones" routerLinkActive="active" (click)="closeSidebar()">
-              <span>🎟️</span> Cupones
+            <a routerLink="roles" routerLinkActive="active" (click)="closeSidebar()">
+              <span>🔐</span> Roles y Permisos
             </a>
           </li>
         }

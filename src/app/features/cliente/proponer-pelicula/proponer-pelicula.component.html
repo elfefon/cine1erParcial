@@ -1,0 +1,107 @@
+<div class="proponer-container">
+  <div class="header-box">
+    <h2>💡 Proponer una Película</h2>
+    <p>¿Hay alguna película que no esté en nuestra cartelera y te encantaría ver en pantalla grande? ¡Contanos tu propuesta!</p>
+  </div>
+
+  @if (loading()) {
+    <div class="card-panel text-center">
+      <p>Cargando tus propuestas...</p>
+    </div>
+  } @else if (propuestaPendiente(); as activa) {
+    <div class="card-panel active-proposal-card">
+      <div class="badge-row">
+        <span class="badge-pending">⏳ Propuesta en Revisión (1 propuesta activa a la vez)</span>
+        <span class="proposal-date">{{ activa.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <h3>🎬 {{ activa.titulo }}</h3>
+
+      <div class="detail-group">
+        <label>Descripción / Sinopsis enviada:</label>
+        <p>{{ activa.descripcion }}</p>
+      </div>
+
+      <div class="detail-group">
+        <label>Por qué querés verla en nuestro cine:</label>
+        <p>{{ activa.motivo }}</p>
+      </div>
+
+      <div class="info-banner">
+        ℹ️ Ya tenés una propuesta activa pendiente de evaluación por parte de administración. Una vez que sea aceptada o rechazada, podrás enviar una nueva propuesta.
+      </div>
+    </div>
+  } @else {
+    <div class="card-panel">
+      <h3>Enviar Nueva Propuesta</h3>
+      <p class="subtitle-note">Recordá que podés tener una propuesta activa a la vez. Completá los tres campos para que nuestro equipo la evalúe.</p>
+
+      <form [formGroup]="propuestaForm" (ngSubmit)="enviarPropuesta()" class="propuesta-form">
+        <div class="form-group">
+          <label for="titulo">Título de la película *</label>
+          <input
+            id="titulo"
+            type="text"
+            formControlName="titulo"
+            placeholder="Ej: Interstellar (Reestreno IMAX)"
+          />
+          @if (propuestaForm.get('titulo')?.touched && propuestaForm.get('titulo')?.invalid) {
+            <small class="error-text">Ingresá el título de la película (mínimo 2 caracteres).</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción / Sinopsis de la película *</label>
+          <textarea
+            id="descripcion"
+            rows="3"
+            formControlName="descripcion"
+            placeholder="Describí brevemente de qué trata la película..."
+          ></textarea>
+          @if (propuestaForm.get('descripcion')?.touched && propuestaForm.get('descripcion')?.invalid) {
+            <small class="error-text">Ingresá una descripción de al menos 10 caracteres.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="motivo">¿Por qué querés que agreguemos esta película al cine? *</label>
+          <textarea
+            id="motivo"
+            rows="3"
+            formControlName="motivo"
+            placeholder="Contanos por qué te gustaría verla en nuestras salas (ej: aniversario, experiencia visual/sonora, pedido de fans)..."
+          ></textarea>
+          @if (propuestaForm.get('motivo')?.touched && propuestaForm.get('motivo')?.invalid) {
+            <small class="error-text">Explicá tu motivo (mínimo 10 caracteres).</small>
+          }
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="propuestaForm.invalid || enviando()">
+          {{ enviando() ? '⏳ Enviando propuesta...' : '🚀 Enviar Propuesta al Cine' }}
+        </button>
+      </form>
+    </div>
+  }
+
+  @if (historialPropuestas().length > 0) {
+    <div class="card-panel history-panel">
+      <h3>📋 Tus Propuestas Anteriores</h3>
+      <div class="history-list">
+        @for (item of historialPropuestas(); track item.id) {
+          <div class="history-item">
+            <div>
+              <strong>{{ item.titulo }}</strong>
+              <p class="muted-text">{{ item.descripcion }}</p>
+              <small class="muted-date">Enviada el {{ item.created_at | date:'dd/MM/yyyy' }}</small>
+            </div>
+            <span
+              class="status-pill"
+              [class.accepted]="item.estado === 'aceptada'"
+              [class.rejected]="item.estado === 'rechazada'">
+              {{ item.estado === 'aceptada' ? '✅ Aceptada' : '❌ Rechazada' }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

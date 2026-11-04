@@ -2,6 +2,10 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { WaitlistService } from '../../../core/services/waitlist.service';
+import { RolesService } from '../../../core/services/roles.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { WaitlistEntry } from '../../../models/waitlist.interface';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,11 +19,16 @@ import { FormsModule } from '@angular/forms';
 })
 export class PerfilUsuarioComponent implements OnInit {
   authService = inject(AuthService);
+  rolesService = inject(RolesService);
   private router = inject(Router);
   private supabase = inject(SupabaseService);
+  private waitlistService = inject(WaitlistService);
+  private toastService = inject(ToastService);
 
   peliculasVistas = signal<any[]>([]);
   historialPuntos = signal<any[]>([]);
+  misListasEspera = signal<WaitlistEntry[]>([]);
+  cargandoWaitlist = signal(false);
 
   // Estado para la reseña
   peliculaACalificar = signal<any>(null);
@@ -28,22 +37,63 @@ export class PerfilUsuarioComponent implements OnInit {
   enviandoResena = signal(false);
 
   async ngOnInit() {
+    await this.rolesService.cargarRolesDesdeDB();
     const user = this.authService.usuarioActual();
     if (user) {
-      // Recargar puntos
-      const { data } = await this.supabase.client.from('profiles').select('puntos, credito_saldo').eq('id', user.id).single();
+      const { data } = await this.supabase.client.from('profiles').select('puntos, credito_saldo, role').eq('id', user.id).single();
       if (data) {
-        this.authService.usuarioActual.update(u => u ? { ...u, puntos: data.puntos || 0, credito_saldo: data.credito_saldo || 0 } : null);
+        this.authService.usuarioActual.update(u => u ? {
+          ...u,
+          puntos: data.puntos || 0,
+          credito_saldo: data.credito_saldo || 0,
+          role: data.role || u.role
+        } : null);
       }
-      await this.cargarHistorial();
+      await Promise.all([
+        this.cargarHistorial(),
+        this.cargarMisListasEspera()
+      ]);
     }
+  }
+
+  async cargarMisListasEspera() {
+    const user = this.authService.usuarioActual();
+    if (!user) return;
+    this.cargandoWaitlist.set(true);
+    try {
+      const listas = await this.waitlistService.obtenerListasDeUsuarioConPosicion(user.id);
+      this.misListasEspera.set(listas);
+    } finally {
+      this.cargandoWaitlist.set(false);
+    }
+  }
+
+  async salirDeLista(entry: WaitlistEntry) {
+    if (!confirm('¿Querés salir de esta lista de espera?')) return;
+    const res = await this.waitlistService.salirDeListaEspera(entry.id, entry.showtime_id);
+    if (res.ok) {
+      this.toastService.info(res.mensaje);
+      await this.cargarMisListasEspera();
+    } else {
+      this.toastService.error(res.mensaje);
+    }
+  }
+
+  tieneAccesoAdmin(): boolean {
+    const rol = this.authService.usuarioActual()?.role;
+    return this.rolesService.tieneAccesoAlPanelAdmin(rol);
+  }
+
+  obtenerRutaInicialAdmin(): string[] {
+    const rol = this.authService.usuarioActual()?.role;
+    const ruta = this.rolesService.obtenerPrimeraRutaPermitida(rol);
+    return ['/admin', ruta];
   }
 
   async cargarHistorial() {
     const user = this.authService.usuarioActual();
     if (!user) return;
     
-    // Obtener tickets con películas
     const { data } = await this.supabase.client
       .from('tickets')
       .select(`
@@ -105,8 +155,7 @@ export class PerfilUsuarioComponent implements OnInit {
 
     this.enviandoResena.set(true);
     try {
-      // Verificar si ya existe una reseña para este usuario y película
-      const { data: existingReview, error: checkError } = await this.supabase.client
+      const { data: existingReview } = await this.supabase.client
         .from('reviews')
         .select('id')
         .eq('movie_id', peli.id)

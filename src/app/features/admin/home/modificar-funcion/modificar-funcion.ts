@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SupabaseService } from '../../../../core/services/supabase.service';
+import { WaitlistService } from '../../../../core/services/waitlist.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   imports: [CommonModule, ReactiveFormsModule],
@@ -22,6 +24,8 @@ export class ModificarFuncion implements OnInit {
 
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
+  private waitlistService = inject(WaitlistService);
+  private toastService = inject(ToastService);
 
   funcionForm = this.fb.nonNullable.group({
     pelicula_id: ['', Validators.required],
@@ -33,6 +37,8 @@ export class ModificarFuncion implements OnInit {
   });
 
   entradasVendidas = 0;
+  personasEnEspera = signal(0);
+  cancelandoFuncion = signal(false);
 
   getNombrePelicula(id: string | null | undefined): string {
     if (!id) return '';
@@ -50,7 +56,7 @@ export class ModificarFuncion implements OnInit {
     }
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     if (this.funcion) {
       // Formatear fecha para el input datetime-local: YYYY-MM-DDThh:mm
       const rawDate = this.funcion.fecha_hora;
@@ -68,6 +74,9 @@ export class ModificarFuncion implements OnInit {
         precio: this.funcion.precio_base,
         formato: this.funcion.formato || '2D'
       });
+
+      const conteos = await this.waitlistService.obtenerConteoEsperaPorFunciones([this.funcion.id]);
+      this.personasEnEspera.set(conteos[this.funcion.id] || 0);
     }
 
     this.verificarEntradasVendidas();
@@ -160,7 +169,7 @@ export class ModificarFuncion implements OnInit {
 
   async onEliminar() {
     if (this.entradasVendidas > 0) {
-      alert('No se puede eliminar la función porque ya tiene ' + this.entradasVendidas + ' entrada(s) vendida(s).');
+      await this.onCancelarFuncionPorCine();
       return;
     }
     const confirmacion = confirm('¿Estás seguro que deseas eliminar esta función de forma permanente?');
@@ -172,6 +181,33 @@ export class ModificarFuncion implements OnInit {
         console.error(err);
         alert('Error al eliminar la función. Puede que tenga tickets asociados.');
       }
+    }
+  }
+
+  async onCancelarFuncionPorCine() {
+    const motivo = prompt(
+      `⚠️ CANCELACIÓN ATÓMICA DE FUNCIÓN POR EL CINE\n\n` +
+      `Butacas vendidas: ${this.entradasVendidas} | Personas en lista de espera: ${this.personasEnEspera()}\n` +
+      `Se acreditará de forma atómica el monto total (entradas + candy) en la cuenta de todos los compradores, se liberarán las butacas y se notificará a cada usuario para reubicarse en otra función.\n\n` +
+      `Ingresá el motivo de la suspensión:`,
+      'Problema técnico en la sala'
+    );
+    if (motivo === null) return;
+
+    this.cancelandoFuncion.set(true);
+    try {
+      const res = await this.waitlistService.cancelarFuncionCompletaPorCine(
+        this.funcion.id,
+        motivo.trim() || 'Problema técnico en la sala'
+      );
+      if (res.ok) {
+        this.toastService.success(res.mensaje);
+        this.saved.emit();
+      } else {
+        this.toastService.error(res.mensaje);
+      }
+    } finally {
+      this.cancelandoFuncion.set(false);
     }
   }
 

@@ -3,6 +3,20 @@
   <p>Agregá nuevas películas a la cartelera y administrá el catálogo</p>
 </div>
 
+@if (propuestaPreCargada(); as prop) {
+  <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+    <strong style="color: #10b981; display: block; margin-bottom: 6px;">✨ Creando película a partir de una Propuesta de Cliente Aceptada</strong>
+    <p style="margin: 0; color: var(--text-main); font-size: 0.92rem;">
+      Se pre-cargaron el título <strong>"{{ prop.titulo }}"</strong> y la descripción enviada por el cliente. Podés importarla directamente desde TMDB o completar los detalles manualmente abajo.
+    </p>
+    @if (prop.motivo) {
+      <small style="display: block; margin-top: 6px; color: var(--text-muted); font-style: italic;">
+        Motivo del cliente: "{{ prop.motivo }}"
+      </small>
+    }
+  </div>
+}
+
 <div class="form-card" style="margin-bottom: 30px;">
   <h3>Opción 1: Buscar en BD de TMDB (Automático)</h3>
   <div style="display: flex; gap: 10px; margin-top: 15px;">

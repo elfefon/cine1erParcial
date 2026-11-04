@@ -242,7 +242,8 @@ export class SupabaseService {
       if (user) {
         // Obtenemos rol para ver si es admin
         const { data: profile } = await this._supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (!profile || !['admin', 'gerente'].includes(profile.role)) {
+        const roleName = (profile?.role || 'cliente').toLowerCase();
+        if (!profile || roleName === 'cliente' || roleName === 'empleado') {
           if (table === 'profiles') {
             query = query.eq('id', user.id);
           } else {

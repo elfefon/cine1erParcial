@@ -1,9 +1,14 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
+import { WaitlistService } from '../../../core/services/waitlist.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Pelicula } from '../../../models/pelicula.interface';
+import { WaitlistEntry } from '../../../models/waitlist.interface';
+import { MapaButacasComponent, ButacaItem } from '../../../shared/components/mapa-butacas/mapa-butacas.component';
 
 interface Butaca {
   id: string; // uuid de seats
@@ -14,12 +19,10 @@ interface Butaca {
   estado: 'libre' | 'seleccionada' | 'ocupada';
 }
 
-import { MapaButacasComponent, ButacaItem } from '../../../shared/components/mapa-butacas/mapa-butacas.component';
-
 @Component({
   selector: 'app-reserva-butacas',
   standalone: true,
-  imports: [MapaButacasComponent],
+  imports: [CommonModule, MapaButacasComponent],
   templateUrl: './reserva-butacas.component.html',
   styleUrl: './reserva-butacas.component.css'
 })
@@ -27,26 +30,54 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private supabase = inject(SupabaseService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private cart = inject(CartService);
+  private waitlistService = inject(WaitlistService);
+  private toastService = inject(ToastService);
 
   peliculaId = signal<string>('');
   pelicula = signal<Pelicula | null>(null);
   showtimeId = signal<string>('');
   showtimeRaw = signal<any>(null);
-  
+  modoReubicacion = signal(false);
+
   butacas = signal<Butaca[]>([]);
-  
+  colaEspera = signal<WaitlistEntry[]>([]);
+  procesandoWaitlist = signal(false);
+
   warningPreventa = signal('');
   mensajeExito = signal('');
   loading = signal(false);
 
   private realtimeChannel: any;
+  private timerWaitlist: any;
   private myLockedSeatIds: string[] = [];
 
+  butacasLibresCount = computed(() => {
+    return this.butacas().filter(b => b.estado === 'libre' || b.estado === 'seleccionada').length;
+  });
+
+  funcionAgotada = computed(() => {
+    const lista = this.butacas();
+    if (lista.length === 0) return false;
+    return lista.every(b => b.estado === 'ocupada');
+  });
+
+  miEntradaEspera = computed<WaitlistEntry | null>(() => {
+    const user = this.auth.usuarioActual();
+    if (!user) return null;
+    return this.colaEspera().find(e => e.user_id === user.id) || null;
+  });
+
+  turnoReservadoParaOtro = computed<boolean>(() => {
+    const user = this.auth.usuarioActual();
+    const notificado = this.colaEspera().find(e => e.estado === 'notificado');
+    if (!notificado) return false;
+    return !user || notificado.user_id !== user.id;
+  });
+
   precioBase = computed(() => {
-    let base = this.showtimeRaw()?.precio_base || 5000;
-    return base;
+    return this.showtimeRaw()?.precio_base || 5000;
   });
 
   butacasSeleccionadasCount = computed(() => {
@@ -67,7 +98,14 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.peliculaId.set(this.route.snapshot.paramMap.get('id') || '');
+    this.modoReubicacion.set(this.route.snapshot.queryParamMap.get('reubicar') === 'true');
     await this.cargarDatos();
+
+    this.timerWaitlist = setInterval(() => {
+      if (this.showtimeId()) {
+        this.cargarListaEspera();
+      }
+    }, 30000);
   }
 
   async cargarDatos() {
@@ -92,7 +130,6 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     this.showtimeId.set(showtime.id);
     this.showtimeRaw.set(showtime);
 
-    // Warning preventa
     if (showtime.es_preventa) {
       const showDate = new Date(showtime.fecha_hora);
       const now = new Date();
@@ -111,16 +148,14 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     const resLocks = await this.supabase.client.from('locked_seats').select('seat_id, user_id').eq('showtime_id', showtime.id);
     const lockedSeats = resLocks.data || [];
     
-    // Si la butaca está bloqueada por mí, sigue libre pero ya la tengo pre-seleccionada (la marco como seleccionada en la UI).
-    // Si está bloqueada por otro, la marco como ocupada.
     const currentUser = this.auth.usuarioActual();
     
     lockedSeats.forEach(l => {
-       if (currentUser && l.user_id === currentUser.id) {
-          this.myLockedSeatIds.push(l.seat_id);
-       } else {
-          occupiedSeatIds.push(l.seat_id);
-       }
+      if (currentUser && l.user_id === currentUser.id) {
+        this.myLockedSeatIds.push(l.seat_id);
+      } else {
+        occupiedSeatIds.push(l.seat_id);
+      }
     });
 
     const mappedButacas: Butaca[] = dbSeats.map(seat => ({
@@ -135,7 +170,56 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     mappedButacas.sort((a, b) => (a.fila || '').localeCompare(b.fila || '') || a.columna - b.columna);
     this.butacas.set(mappedButacas);
     
+    await this.cargarListaEspera();
     this.iniciarRealtime();
+  }
+
+  async cargarListaEspera() {
+    if (!this.showtimeId()) return;
+    const cola = await this.waitlistService.obtenerColaPorFuncion(this.showtimeId());
+    this.colaEspera.set(cola);
+  }
+
+  async anotarseEnListaEspera() {
+    const user = this.auth.usuarioActual();
+    if (!user) {
+      this.toastService.warning('Debés iniciar sesión para anotarte en la lista de espera.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    await this.waitlistService.solicitarPermisoPush();
+    this.procesandoWaitlist.set(true);
+    try {
+      const res = await this.waitlistService.inscribirseEnListaEspera(this.showtimeId());
+      if (res.ok) {
+        this.toastService.success(res.mensaje);
+        await this.cargarListaEspera();
+      } else {
+        this.toastService.warning(res.mensaje);
+      }
+    } finally {
+      this.procesandoWaitlist.set(false);
+    }
+  }
+
+  async salirDeListaEspera() {
+    const entrada = this.miEntradaEspera();
+    if (!entrada) return;
+    if (!confirm('¿Seguro que querés salir de la lista de espera para esta función?')) return;
+
+    this.procesandoWaitlist.set(true);
+    try {
+      const res = await this.waitlistService.salirDeListaEspera(entrada.id, this.showtimeId());
+      if (res.ok) {
+        this.toastService.info(res.mensaje);
+        await this.cargarListaEspera();
+      } else {
+        this.toastService.error(res.mensaje);
+      }
+    } finally {
+      this.procesandoWaitlist.set(false);
+    }
   }
 
   iniciarRealtime() {
@@ -145,11 +229,9 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     this.realtimeChannel = this.supabase.client
       .channel(`locked_seats_${showtime}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'locked_seats', filter: `showtime_id=eq.${showtime}` }, payload => {
-          // se selecciono una butaca por otro usuario
         const newLock = payload.new as any;
         const currentUser = this.auth.usuarioActual();
         if (!currentUser || newLock.user_id !== currentUser.id) {
-          // Otro usuario bloqueó la butaca, marcar como ocupada en UI
           this.butacas.update(lista => {
             const b = lista.find(item => item.id === newLock.seat_id);
             if (b) b.estado = 'ocupada';
@@ -158,31 +240,42 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'locked_seats', filter: `showtime_id=eq.${showtime}` }, payload => {
-        // se desbloqueo una butaca
         const oldLock = payload.old as any;
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === oldLock.seat_id);
           if (b && b.estado === 'ocupada') b.estado = 'libre';
           return [...lista];
         });
+        this.cargarListaEspera();
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'seat_reservations', filter: `showtime_id=eq.${showtime}` }, payload => {
-        // se reservo una butaca
         const newRes = payload.new as any;
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === newRes.seat_id);
           if (b) b.estado = 'ocupada';
           return [...lista];
         });
+        this.cargarListaEspera();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'seat_reservations', filter: `showtime_id=eq.${showtime}` }, payload => {
+        const oldRes = payload.old as any;
+        this.butacas.update(lista => {
+          const b = lista.find(item => item.id === oldRes.seat_id);
+          if (b) b.estado = 'libre';
+          return [...lista];
+        });
+        this.cargarListaEspera();
       })
       .subscribe();
   }
 
   async ngOnDestroy() {
+    if (this.timerWaitlist) {
+      clearInterval(this.timerWaitlist);
+    }
     if (this.realtimeChannel) {
       this.supabase.client.removeChannel(this.realtimeChannel);
     }
-    // Liberar las butacas que bloqueé si me voy sin comprar
     const currentUser = this.auth.usuarioActual();
     if (currentUser && this.myLockedSeatIds.length > 0) {
       await this.supabase.client.from('locked_seats').delete()
@@ -215,13 +308,17 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.turnoReservadoParaOtro()) {
+      this.toastService.warning('Las butacas liberadas están reservadas durante 15 minutos para el primer usuario en la lista de espera.');
+      return;
+    }
+
     let aSeleccionar = false;
-    let bActual = this.butacas().find(item => item.id === butaca.id);
+    const bActual = this.butacas().find(item => item.id === butaca.id);
     if (!bActual || bActual.estado === 'ocupada') return;
 
     if (bActual.estado === 'libre') aSeleccionar = true;
 
-    // Actualizo UI optimísticamente
     this.butacas.update(lista => {
       const b = lista.find(item => item.id === butaca.id);
       if (b && b.estado !== 'ocupada') {
@@ -231,14 +328,12 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
     });
 
     if (aSeleccionar) {
-      // Intentar bloquear en DB
       const { error } = await this.supabase.client.from('locked_seats').insert({
         showtime_id: this.showtimeId(),
         seat_id: butaca.id,
         user_id: user.id
       });
       if (error) {
-        // Alguien más la ganó
         alert('Esta butaca acaba de ser reservada por otra persona.');
         this.butacas.update(lista => {
           const b = lista.find(item => item.id === butaca.id);
@@ -249,7 +344,6 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
         this.myLockedSeatIds.push(butaca.id);
       }
     } else {
-      // Desbloquear en DB
       this.myLockedSeatIds = this.myLockedSeatIds.filter(id => id !== butaca.id);
       await this.supabase.client.from('locked_seats').delete()
         .eq('showtime_id', this.showtimeId())
@@ -264,7 +358,6 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // VALIDACIÓN DE EDAD
     const p = this.pelicula();
     const user = this.auth.usuarioActual();
     
@@ -285,9 +378,9 @@ export class ReservaButacasComponent implements OnInit, OnDestroy {
           return;
         }
       } else if (!user) {
-         if (!confirm(`🔞 ATENCIÓN: Esta película es para mayores de ${p.restriccion_edad} años. Al continuar como invitado, confirmás que cumplís con la edad mínima o asistirás con un adulto responsable.`)) {
-            return;
-         }
+        if (!confirm(`🔞 ATENCIÓN: Esta película es para mayores de ${p.restriccion_edad} años. Al continuar como invitado, confirmás que cumplís con la edad mínima o asistirás con un adulto responsable.`)) {
+          return;
+        }
       }
     }
 

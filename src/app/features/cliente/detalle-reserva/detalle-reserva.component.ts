@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { WaitlistService } from '../../../core/services/waitlist.service';
 
 @Component({
   selector: 'app-detalle-reserva',
@@ -13,10 +14,12 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 export class DetalleReservaComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private supabase = inject(SupabaseService);
+  private waitlistService = inject(WaitlistService);
 
   ticketId = signal<string>('');
   ticket = signal<any>(null);
   loading = signal(true);
+  movieIdGuardado = signal<string | null>(null);
 
   async ngOnInit() {
     this.ticketId.set(this.route.snapshot.paramMap.get('id') || '');
@@ -35,7 +38,7 @@ export class DetalleReservaComponent implements OnInit {
             *,
             showtimes(
               *,
-              movies(nombre, imagen_url, imagen_apaisada_url),
+              movies(id, nombre, imagen_url, imagen_apaisada_url),
               rooms(nombre)
             ),
             seats(numero_butaca)
@@ -51,6 +54,10 @@ export class DetalleReservaComponent implements OnInit {
 
       if (data) {
         this.ticket.set(data);
+        const mId = data.seat_reservations?.[0]?.showtimes?.movie_id || data.seat_reservations?.[0]?.showtimes?.movies?.id;
+        if (mId) {
+          this.movieIdGuardado.set(mId);
+        }
       } else {
         console.error('No se encontró el ticket', error);
       }
@@ -65,7 +72,6 @@ export class DetalleReservaComponent implements OnInit {
     const t = this.ticket();
     if (!t || t.estado === 'cancelado') return false;
     
-    // Solo permitir cancelar si tiene al menos 1 película. (Candy solo no se cancela)
     if (!t.seat_reservations || t.seat_reservations.length === 0) return false;
     
     const showtimeStr = t.seat_reservations[0].showtimes?.fecha_hora;
@@ -79,7 +85,7 @@ export class DetalleReservaComponent implements OnInit {
   }
 
   async cancelarReserva() {
-    if (!confirm('¿Estás seguro de que querés cancelar esta reserva? El dinero se acreditará a tu saldo a favor automáticamente.')) {
+    if (!confirm('¿Estás seguro de que querés cancelar esta reserva? El dinero se acreditará a tu saldo a favor automáticamente y, si hay personas en la lista de espera, se notificará al siguiente en turno.')) {
       return;
     }
     this.loading.set(true);
@@ -87,6 +93,11 @@ export class DetalleReservaComponent implements OnInit {
     try {
       const t = this.ticket();
       const devolucion = t.total_pagado || 0;
+      const showtimeId = t.seat_reservations?.[0]?.showtime_id;
+      const mId = t.seat_reservations?.[0]?.showtimes?.movie_id || t.seat_reservations?.[0]?.showtimes?.movies?.id;
+      if (mId) {
+        this.movieIdGuardado.set(mId);
+      }
       
       // 1. Marcar ticket como cancelado
       await this.supabase.client.from('tickets').update({ estado: 'cancelado' }).eq('id', t.id);
@@ -99,6 +110,11 @@ export class DetalleReservaComponent implements OnInit {
         const { data: profile } = await this.supabase.client.from('profiles').select('credito_saldo').eq('id', t.user_id).single();
         const saldoActual = profile?.credito_saldo || 0;
         await this.supabase.client.from('profiles').update({ credito_saldo: saldoActual + devolucion }).eq('id', t.user_id);
+      }
+
+      // 4. Si había lista de espera para esa función, notificar automáticamente al #1 (ventana de 15 minutos)
+      if (showtimeId) {
+        await this.waitlistService.notificarSiguienteEnLista(showtimeId);
       }
       
       alert(`Reserva cancelada. Se han devuelto $${devolucion} a tu saldo a favor.`);

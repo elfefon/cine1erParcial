@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 import { PeliculasStateService } from '../../services/peliculas-state.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-gp-crear-pelicula',
@@ -10,23 +10,46 @@ import { Router } from '@angular/router';
   imports: [ReactiveFormsModule],
   templateUrl: './gp-crear-pelicula.html'
 })
-export class GpCrearPeliculaComponent {
+export class GpCrearPeliculaComponent implements OnInit {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
   private state = inject(PeliculasStateService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   tmdbNombreInput = signal<string>('');
+  propuestaPreCargada = signal<{ titulo: string; sinopsis: string; motivo?: string } | null>(null);
 
   peliculaForm = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     imagen_url: ['', Validators.required],
     sinopsis: ['', Validators.required],
-    duracion_min: [0, [Validators.required, Validators.min(1)]],
+    duracion_min: [120, [Validators.required, Validators.min(1)]],
     restriccion_edad: [0, [Validators.required, Validators.min(0)]],
     generos: ['', Validators.required],
     fecha_estreno: ['']
   });
+
+  ngOnInit() {
+    this.route.queryParamMap.subscribe(params => {
+      const titulo = params.get('titulo');
+      const sinopsis = params.get('sinopsis');
+      const motivo = params.get('motivo') || undefined;
+
+      if (titulo || sinopsis) {
+        this.propuestaPreCargada.set({
+          titulo: titulo || '',
+          sinopsis: sinopsis || '',
+          motivo
+        });
+        this.tmdbNombreInput.set(titulo || '');
+        this.peliculaForm.patchValue({
+          nombre: titulo || '',
+          sinopsis: sinopsis || ''
+        });
+      }
+    });
+  }
 
   async importarDesdeTMDB() {
     const nombre = this.tmdbNombreInput().trim();

@@ -5,14 +5,32 @@
       <p>Cargando detalles de tu reserva...</p>
     </div>
   } @else if (ticket()) {
-    <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
       <div>
         <a routerLink="/mis-reservas" class="btn-back">← Volver a Mis Reservas</a>
         <h2>Detalle del Ticket</h2>
         <p class="subtitle">N° {{ ticket().codigo_venta }}</p>
         @if (ticket().estado === 'cancelado') {
-          <div style="background: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 10px; display: inline-block;">
-            CANCELADO
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap;">
+            <div style="background: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; display: inline-block;">
+              CANCELADO (Monto acreditado en tu cuenta)
+            </div>
+            @if (movieIdGuardado()) {
+              <a
+                [routerLink]="['/pelicula', movieIdGuardado()]"
+                [queryParams]="{ reubicar: 'true' }"
+                style="background: #38bdf8; color: #0f172a; padding: 7px 16px; border-radius: 20px; font-weight: 800; text-decoration: none;"
+              >
+                🔄 Reubicarme en otra función de esta película
+              </a>
+            } @else {
+              <a
+                routerLink="/cartelera"
+                style="background: #38bdf8; color: #0f172a; padding: 7px 16px; border-radius: 20px; font-weight: 800; text-decoration: none;"
+              >
+                🔄 Elegir otra función en Cartelera con mi crédito
+              </a>
+            }
           </div>
         }
       </div>

@@ -4,6 +4,17 @@
     <span>← Volver a Cartelera</span>
   </a>
 
+  @if (modoReubicacion()) {
+    <div style="background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.45); color: #e0f2fe; padding: 18px; border-radius: 12px; margin-bottom: 22px;">
+      <strong style="font-size: 1.05rem; color: #38bdf8; display: block; margin-bottom: 4px;">
+        🔄 Reubicación en otra función de "{{ p.nombre }}"
+      </strong>
+      <span>
+        Seleccioná cualquiera de las funciones disponibles abajo para reubicarte. Tu saldo a favor acreditado (<strong>${{ authService.usuarioActual()?.credito_saldo || 0 }}</strong>) se aplicará en el carrito.
+      </span>
+    </div>
+  }
+
   <div class="movie-detail-card">
     <div class="poster-col">
       <div class="poster-box">
@@ -69,7 +80,7 @@
       @if (funciones().length > 0) {
       <div class="funciones-carousel" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; snap-type: x mandatory;">
         @for (f of funciones(); track f.id) {
-        <a [routerLink]="['/reserva', p.id]" [queryParams]="{ showtime: f.id }" class="funcion-card">
+        <a [routerLink]="['/reserva', p.id]" [queryParams]="modoReubicacion() ? { showtime: f.id, reubicar: 'true' } : { showtime: f.id }" class="funcion-card">
           <div class="f-date">📅 {{ f.fecha_hora | date:'dd/MMM' }}</div>
           <div class="f-time">⏰ {{ f.fecha_hora | date:'HH:mm' }}</div>
           <div class="f-room">📍 {{ f.rooms?.nombre }} | {{ f.idioma }} | {{ f.formato }}</div>

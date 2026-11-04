@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-import { adminGuard } from './core/guards/admin.guard';
 import { gerenteGuard } from './core/guards/gerente.guard';
+import { permisoGuard } from './core/guards/permiso.guard';
 
 export const routes: Routes = [
   {
@@ -21,11 +21,13 @@ export const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       {
         path: 'home',
-        loadComponent: () => import('./features/admin/home/home.component').then(m => m.HomeComponent)
+        loadComponent: () => import('./features/admin/home/home.component').then(m => m.HomeComponent),
+        canMatch: [permisoGuard('reportes')]
       },
       { 
         path: 'peliculas', 
         loadComponent: () => import('./features/admin/gestion-peliculas/gestion-peliculas.component').then(m => m.GestionPeliculasComponent),
+        canMatch: [permisoGuard('peliculas')],
         children: [
           { path: '', redirectTo: 'menu', pathMatch: 'full' },
           {
@@ -55,12 +57,17 @@ export const routes: Routes = [
           {
             path: 'ver-funciones',
             loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-ver-funciones/gp-ver-funciones').then(m => m.GpVerFuncionesComponent)
+          },
+          {
+            path: 'propuestas',
+            loadComponent: () => import('./features/admin/gestion-peliculas/components/gp-propuestas/gp-propuestas').then(m => m.GpPropuestasComponent)
           }
         ]
       },
       { 
         path: 'combos', 
         loadComponent: () => import('./features/admin/gestion-combos/gestion-combos.component').then(m => m.GestionCombosComponent),
+        canMatch: [permisoGuard('combos')],
         children: [
           { path: '', redirectTo: 'menu', pathMatch: 'full' },
           {
@@ -88,17 +95,22 @@ export const routes: Routes = [
       {
         path: 'historial',
         loadComponent: () => import('./features/admin/historial-acciones/historial-acciones.component').then(m => m.HistorialAccionesComponent),
-        canMatch: [adminGuard]
+        canMatch: [permisoGuard('historial')]
       },
       {
         path: 'cupones',
         loadComponent: () => import('./features/admin/cupones/cupones.component').then(m => m.CuponesComponent),
-        canMatch: [adminGuard]
+        canMatch: [permisoGuard('cupones')]
       },
       {
         path: 'salas',
         loadComponent: () => import('./features/admin/salas/salas').then(m => m.SalasComponent),
-        canMatch: [adminGuard]
+        canMatch: [permisoGuard('salas')]
+      },
+      {
+        path: 'roles',
+        loadComponent: () => import('./features/admin/roles/roles.component').then(m => m.RolesComponent),
+        canMatch: [permisoGuard('roles')]
       }
     ]
   },
@@ -139,6 +151,11 @@ export const routes: Routes = [
       {
         path: 'mis-reservas/:id',
         loadComponent: () => import('./features/cliente/detalle-reserva/detalle-reserva.component').then(m => m.DetalleReservaComponent),
+        canActivate: [authGuard]
+      },
+      {
+        path: 'proponer-pelicula',
+        loadComponent: () => import('./features/cliente/proponer-pelicula/proponer-pelicula.component').then(m => m.ProponerPeliculaComponent),
         canActivate: [authGuard]
       },
       {

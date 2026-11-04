@@ -6,6 +6,33 @@
     </div>
   }
 
+  @if (modoReubicacion()) {
+    <div style="background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.45); color: #e0f2fe; padding: 16px; border-radius: 10px; margin-bottom: 20px;">
+      <strong>🔄 Reubicación por Función Cancelada:</strong> Elegí tus nuevas butacas para esta función. Tu crédito reembolsado (<strong>${{ auth.usuarioActual()?.credito_saldo || 0 }}</strong>) se descontará automáticamente al confirmar en el carrito.
+    </div>
+  }
+
+  <!-- Banner de Turno Activo en Lista de Espera (15 minutos) -->
+  @if (miEntradaEspera()?.estado === 'notificado') {
+    <div style="background: rgba(16, 185, 129, 0.16); border: 1px solid #10b981; color: #d1fae5; padding: 18px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <div>
+        <strong style="font-size: 1.05rem; color: #34d399; display: block; margin-bottom: 4px;">
+          🎉 ¡Es tu turno en la Lista de Espera!
+        </strong>
+        <span>
+          Se liberaron butacas para esta función. Tenés prioridad durante <strong>{{ miEntradaEspera()?.minutos_restantes || 15 }} min restantes</strong> (de 15 min) antes de que el turno pase a la siguiente persona.
+        </span>
+      </div>
+      <button
+        type="button"
+        (click)="salirDeListaEspera()"
+        style="background: transparent; border: 1px solid rgba(209, 250, 229, 0.4); color: #d1fae5; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600;"
+      >
+        Renunciar al turno
+      </button>
+    </div>
+  }
+
   @if (mensajeExito()) {
     <div class="success-msg">
       🎉 {{ mensajeExito() }}
@@ -16,6 +43,53 @@
         ⚠️ {{ warningPreventa() }}
       </div>
     }
+
+    <!-- Tarjeta de Lista de Espera cuando la función está agotada o el usuario ya está anotado -->
+    @if (funcionAgotada() || miEntradaEspera() || turnoReservadoParaOtro()) {
+      <div style="background: #1e293b; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 14px; padding: 20px; margin-bottom: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h3 style="margin: 0 0 6px; color: #fbbf24; font-size: 1.15rem;">
+              ⏳ {{ funcionAgotada() ? 'Función Agotada — Lista de Espera Activa' : 'Lista de Espera de la Función' }}
+            </h3>
+            <p style="margin: 0; color: #cbd5e1; font-size: 0.92rem;">
+              Si alguien cancela su compra y se liberan butacas, notificamos automáticamente por orden de llegada y tenés <strong>15 minutos</strong> para comprar.
+            </p>
+            <small style="color: #94a3b8; display: block; margin-top: 6px;">
+              Personas actualmente en lista de espera: <strong>{{ colaEspera().length }}</strong>
+            </small>
+          </div>
+
+          <div>
+            @if (miEntradaEspera(); as miEspera) {
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 8px 14px; border-radius: 999px; font-weight: 700;">
+                  📍 Estás en la posición #{{ miEspera.posicion }} ({{ miEspera.estado === 'notificado' ? '¡Tu turno activo!' : 'En espera' }})
+                </span>
+                <button
+                  type="button"
+                  (click)="salirDeListaEspera()"
+                  [disabled]="procesandoWaitlist()"
+                  style="background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer;"
+                >
+                  Salir de la lista
+                </button>
+              </div>
+            } @else {
+              <button
+                type="button"
+                (click)="anotarseEnListaEspera()"
+                [disabled]="procesandoWaitlist()"
+                style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; border: none; padding: 11px 20px; border-radius: 10px; font-weight: 800; cursor: pointer;"
+              >
+                {{ procesandoWaitlist() ? 'Anotando...' : '🔔 Anotarme en la Lista de Espera' }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
     @if (butacas().length === 0) {
       <div class="sala-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
         ⚠️ No hay butacas registradas o accesibles para esta sala en la base de datos.
@@ -40,7 +114,7 @@
         <span class="total-price">${{ total() }}</span>
       </div>
       
-      <button class="btn-confirmar" (click)="agregarAlCarrito()" [disabled]="loading()">
+      <button class="btn-confirmar" (click)="agregarAlCarrito()" [disabled]="loading() || butacasSeleccionadasCount() === 0">
         {{ loading() ? 'Procesando...' : 'Ir al Carrito' }}
       </button>
     </div>

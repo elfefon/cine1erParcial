@@ -5,6 +5,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast';
+import { WaitlistService } from '../../../core/services/waitlist.service';
 
 import { FormsModule } from '@angular/forms';
 
@@ -21,6 +22,7 @@ export class CarritoComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private waitlistService = inject(WaitlistService);
 
   loading = signal(false);
   mensajeExito = signal('');
@@ -94,7 +96,8 @@ export class CarritoComponent {
     this.loading.set(true);
 
     try {
-      const ticketsPayload = this.cart.tickets().map(t => ({
+      const ticketsActuales = this.cart.tickets();
+      const ticketsPayload = ticketsActuales.map(t => ({
         showtime_id: t.id_funcion,
         pelicula_nombre: t.pelicula_nombre,
         butacas: t.butacas,
@@ -121,15 +124,17 @@ export class CarritoComponent {
         p_idempotency_key: Date.now().toString() + '-' + Math.random().toString(36).substring(2)
       };
 
-      const { data, error } = await this.supabase.client.rpc('comprar_checkout', payload);
+      const { error } = await this.supabase.client.rpc('comprar_checkout', payload);
 
       if (error) {
         throw error;
       }
 
-      // Actualizar state local (si usuario autenticado)
-      // Idealmente recargar desde base, o calcular aca, por ahora asumimos que la RPC maneja todo, recargamos la sesion:
       if (usuario) {
+        for (const t of ticketsActuales) {
+          await this.waitlistService.marcarCompraRealizada(t.id_funcion, usuario.id);
+        }
+
         const { data: profile } = await this.supabase.client.from('profiles').select('*').eq('id', usuario.id).single();
         if (profile) {
           this.auth.usuarioActual.set(profile as any);
@@ -145,7 +150,6 @@ export class CarritoComponent {
       
     } catch (e: any) {
       console.error(e);
-      // T9.1 usar alert/toast (por ahora mantendremos simple pero capturando el mensaje real)
       this.toast.error(e.message || 'Error al procesar la compra');
     } finally {
       this.loading.set(false);

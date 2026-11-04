@@ -1,0 +1,90 @@
+<div class="table-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+    <div>
+      <h3 style="margin: 0;">💡 Propuestas de Películas de Clientes</h3>
+      <p style="color: var(--text-muted); margin: 5px 0 0 0; font-size: 0.9rem;">
+        Revisá las películas solicitadas por los usuarios. Al aceptar una propuesta se abrirá la pantalla de creación con los datos precargados.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button
+        type="button"
+        class="btn-modificar"
+        [style.background]="filtroEstado() === 'pendiente' ? 'var(--primary)' : 'rgba(255,255,255,0.08)'"
+        (click)="filtroEstado.set('pendiente')">
+        ⏳ Pendientes
+      </button>
+      <button
+        type="button"
+        class="btn-modificar"
+        [style.background]="filtroEstado() === 'todas' ? 'var(--primary)' : 'rgba(255,255,255,0.08)'"
+        (click)="filtroEstado.set('todas')">
+        📋 Todas
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p style="text-align: center; padding: 30px; color: var(--text-muted);">Cargando propuestas...</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Título Propuesto</th>
+          <th>Descripción / Sinopsis</th>
+          <th>Explicación del Cliente</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of propuestasFiltradas(); track p.id) {
+          <tr>
+            <td>{{ p.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ p.profiles?.nombre || 'Cliente Registrado' }}</td>
+            <td style="font-weight: 700; color: var(--accent-gold);">{{ p.titulo }}</td>
+            <td style="max-width: 260px;">{{ p.descripcion }}</td>
+            <td style="max-width: 260px; color: var(--text-muted); font-style: italic;">"{{ p.motivo }}"</td>
+            <td>
+              <span
+                class="status-badge"
+                [class.activa]="p.estado === 'aceptada'"
+                [class.inactiva]="p.estado === 'rechazada'">
+                {{ p.estado | uppercase }}
+              </span>
+            </td>
+            <td>
+              @if (p.estado === 'pendiente') {
+                <div style="display: flex; gap: 8px;">
+                  <button
+                    class="btn-modificar"
+                    style="background: #10b981; color: white; border: none;"
+                    (click)="aceptarPropuesta(p)">
+                    ✅ Aceptar y Crear
+                  </button>
+                  <button
+                    class="btn-modificar"
+                    style="background: #ef4444; color: white; border: none;"
+                    (click)="rechazarPropuesta(p)">
+                    ❌ Rechazar
+                  </button>
+                </div>
+              } @else {
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Procesada</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">
+              No hay propuestas en estado "{{ filtroEstado() }}".
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

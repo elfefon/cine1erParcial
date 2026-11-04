@@ -2,7 +2,18 @@
   <h3>Funciones Programadas</h3>
   <input type="text" class="search-bar" placeholder="Buscar por película o sala..." (input)="onBuscar($event)">
   <table class="data-table">
-    <thead><tr><th>Película</th><th>Duración</th><th>Horario</th><th>Sala</th><th>Idioma</th><th>Formato</th><th>Acciones</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Película</th>
+        <th>Duración</th>
+        <th>Horario</th>
+        <th>Sala</th>
+        <th>Idioma</th>
+        <th>Formato</th>
+        <th>Lista de Espera</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
     <tbody>
       @for (f of filtradas(); track f.id) {
         <tr>
@@ -12,10 +23,30 @@
           <td>{{ f.rooms?.nombre }}</td>
           <td>{{ f.idioma }}</td>
           <td>{{ f.rooms?.dimension }}</td>
-          <td><button class="btn-modificar" (click)="funcionEdit.set(f)">Modificar</button></td>
+          <td>
+            <span
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;"
+              [style.background]="(conteoEspera()[f.id] || 0) > 0 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(148, 163, 184, 0.12)'"
+              [style.color]="(conteoEspera()[f.id] || 0) > 0 ? '#fbbf24' : '#94a3b8'"
+            >
+              👥 {{ conteoEspera()[f.id] || 0 }} esperando
+            </span>
+          </td>
+          <td style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-modificar" (click)="funcionEdit.set(f)">Modificar</button>
+            <button
+              class="btn-modificar"
+              style="background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);"
+              [disabled]="cancelandoId() === f.id"
+              (click)="cancelarFuncionCompleta(f)"
+              title="Cancelar función completa y reembolsar atómicamente (entradas + candy)"
+            >
+              {{ cancelandoId() === f.id ? 'Cancelando...' : '⚠️ Cancelar Función' }}
+            </button>
+          </td>
         </tr>
       } @empty {
-        <tr><td colspan="7" style="text-align: center; padding: 30px;">No se encontraron funciones.</td></tr>
+        <tr><td colspan="8" style="text-align: center; padding: 30px;">No se encontraron funciones.</td></tr>
       }
     </tbody>
   </table>

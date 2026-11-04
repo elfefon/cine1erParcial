@@ -1,0 +1,196 @@
+<div class="roles-page">
+  <header class="page-header">
+    <div>
+      <h1>🔐 Sistema de Roles y Permisos Configurables</h1>
+      <p>Creá roles personalizados indicando exactamente a qué secciones del panel de administración pueden acceder y asignalos a cualquier usuario.</p>
+    </div>
+  </header>
+
+  <div class="roles-grid">
+    <!-- Panel Izquierdo: Crear / Editar Rol -->
+    <section class="card form-card">
+      <div class="card-header-flex">
+        <h2>{{ editandoId() ? '✏️ Modificar Rol Personalizado' : '➕ Crear Nuevo Rol' }}</h2>
+        <button type="button" class="btn-preset" (click)="aplicarPlantillaSoloReportes()">
+          ⚡ Ejemplo: Rol Solo Reportes
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="nombreRol">Identificador / Nombre del Rol *</label>
+        <input
+          id="nombreRol"
+          type="text"
+          [ngModel]="nombreRol()"
+          (ngModelChange)="nombreRol.set($event)"
+          placeholder="Ej: analista_reportes, encargado_candy..."
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="descRol">Descripción del Rol</label>
+        <input
+          id="descRol"
+          type="text"
+          [ngModel]="descripcionRol()"
+          (ngModelChange)="descripcionRol.set($event)"
+          placeholder="Ej: Solo puede visualizar la sección de Reportes"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Secciones habilitadas en Administración *</label>
+        <div class="permisos-checklist">
+          @for (sec of seccionesCatalogo; track sec.id) {
+            <label class="permiso-option" [class.checked]="tienePermisoSeleccionado(sec.id)">
+              <input
+                type="checkbox"
+                [checked]="tienePermisoSeleccionado(sec.id)"
+                (change)="togglePermiso(sec.id)"
+              />
+              <span class="permiso-icon">{{ sec.icono }}</span>
+              <div class="permiso-info">
+                <strong>{{ sec.label }}</strong>
+                <small>/admin/{{ sec.ruta }}</small>
+              </div>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        @if (editandoId()) {
+          <button type="button" class="btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
+        }
+        <button type="button" class="btn-primary" [disabled]="guardandoRol()" (click)="guardarRol()">
+          {{ guardandoRol() ? 'Guardando...' : (editandoId() ? '💾 Actualizar Rol' : '✨ Guardar Nuevo Rol') }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Panel Derecho: Catálogo de Roles -->
+    <section class="card roles-list-card">
+      <h2>📋 Roles Disponibles ({{ rolesService.roles().length }})</h2>
+      <div class="roles-list">
+        @for (rol of rolesService.roles(); track rol.nombre) {
+          <div class="rol-item" [class.sistema]="rol.es_sistema">
+            <div class="rol-top">
+              <div>
+                <span class="rol-title">{{ rol.nombre }}</span>
+                @if (rol.es_sistema) {
+                  <span class="badge-sistema">Sistema</span>
+                } @else {
+                  <span class="badge-custom">Configurable</span>
+                }
+              </div>
+              @if (!rol.es_sistema) {
+                <div class="rol-actions">
+                  <button type="button" class="btn-icon" (click)="editarRol(rol)" title="Editar permisos">✏️</button>
+                  <button type="button" class="btn-icon danger" (click)="eliminarRol(rol)" title="Eliminar rol">🗑️</button>
+                </div>
+              }
+            </div>
+            <p class="rol-desc">{{ rol.descripcion }}</p>
+            <div class="permisos-tags">
+              @if (rol.permisos.length === 0) {
+                <span class="permiso-chip none">Sin acceso al panel Admin (Vista Cliente)</span>
+              } @else {
+                @for (perm of rol.permisos; track perm) {
+                  <span class="permiso-chip">{{ obtenerEtiquetaSeccion(perm) }}</span>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <!-- Tabla de Usuarios para Asignar Rol -->
+  <section class="card users-card">
+    <div class="users-header">
+      <div>
+        <h2>👤 Asignar Rol a un Usuario</h2>
+        <p>Seleccioná un usuario registrado y asignale cualquiera de los roles creados para definir a qué secciones puede entrar.</p>
+      </div>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="🔍 Buscar usuario por nombre, email o rol..."
+        [ngModel]="filtroUsuario()"
+        (ngModelChange)="filtroUsuario.set($event)"
+      />
+    </div>
+
+    @if (cargandoUsuarios()) {
+      <p style="padding: 20px; color: #94a3b8;">Cargando usuarios...</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Username</th>
+              <th>Rol Actual</th>
+              <th>Permisos Activos</th>
+              <th>Seleccionar Nuevo Rol</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of usuariosFiltrados(); track u.id) {
+              <tr>
+                <td>
+                  <div class="user-name">{{ u.nombre }} {{ u.apellido }}</div>
+                  @if (u.email) {
+                    <small class="user-email">{{ u.email }}</small>
+                  }
+                </td>
+                <td><code>@{{ u.username || 'usuario' }}</code></td>
+                <td>
+                  <span class="role-pill">{{ u.role }}</span>
+                </td>
+                <td>
+                  <div class="permisos-tags compact">
+                    @for (p of (rolesService.obtenerRol(u.role)?.permisos || []); track p) {
+                      <span class="permiso-chip">{{ obtenerEtiquetaSeccion(p) }}</span>
+                    } @empty {
+                      <span class="permiso-chip none">Solo Cliente</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <select
+                    class="role-select"
+                    [value]="rolesPorUsuario()[u.id] || u.role"
+                    (change)="onCambioRolSelect(u.id, $event)"
+                  >
+                    @for (r of rolesService.roles(); track r.nombre) {
+                      <option [value]="r.nombre">{{ r.nombre }} ({{ r.permisos.length }} secciones)</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn-assign"
+                    [disabled]="asignandoUserId() === u.id || (rolesPorUsuario()[u.id] || u.role) === u.role"
+                    (click)="asignarRol(u)"
+                  >
+                    {{ asignandoUserId() === u.id ? 'Asignando...' : '✅ Asignar Rol' }}
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 28px; color: #94a3b8;">
+                  No se encontraron usuarios que coincidan con la búsqueda.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

@@ -5,6 +5,15 @@
       <button class="btn-close" (click)="onCancel()">×</button>
     </div>
 
+    <div style="display: flex; gap: 10px; padding: 0 20px; margin-bottom: 10px; flex-wrap: wrap;">
+      <span style="background: rgba(59, 130, 246, 0.16); color: #93c5fd; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
+        🎟️ Vendidas: {{ entradasVendidas }}
+      </span>
+      <span style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
+        ⏳ En lista de espera: {{ personasEnEspera() }}
+      </span>
+    </div>
+
     <form [formGroup]="funcionForm" (ngSubmit)="onSubmit()" class="modal-body">
       <div class="form-grid">
         <div class="form-group full-width">
@@ -67,10 +76,14 @@
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-delete" (click)="onEliminar()">🗑️ Eliminar</button>
+      <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-delete" [disabled]="cancelandoFuncion()" (click)="onCancelarFuncionPorCine()">
+            {{ cancelandoFuncion() ? 'Reembolsando...' : '⚠️ Cancelar Función (Reembolso Total)' }}
+          </button>
+        </div>
         <div class="footer-actions">
-          <button type="button" class="btn-cancel" (click)="onCancel()">Cancelar</button>
+          <button type="button" class="btn-cancel" (click)="onCancel()">Cerrar</button>
           <button type="submit" class="btn-save" [disabled]="funcionForm.invalid">💾 Guardar Cambios</button>
         </div>
       </div>
