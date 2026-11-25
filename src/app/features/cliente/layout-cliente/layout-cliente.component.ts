@@ -65,6 +65,32 @@ export class LayoutClienteComponent implements OnDestroy {
             this.cargarNotificaciones();
           }
         )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'activity_logs',
+            filter: `user_id=eq.${userId}`
+          },
+          payload => {
+            const nueva = payload.new as any;
+            if (nueva?.accion === '__SYS_NOTIF__') {
+              try {
+                const parsed = JSON.parse(nueva.entidad_afectada || '{}');
+                if (parsed.mensaje) {
+                  this.waitlistService.dispararPushNotification(
+                    parsed.tipo === 'WAITLIST_TURNO'
+                      ? '🎟️ ¡Se liberó un lugar en tu Lista de Espera!'
+                      : '🔔 Notificación de CineUTN',
+                    parsed.mensaje
+                  );
+                }
+              } catch {}
+              this.cargarNotificaciones();
+            }
+          }
+        )
         .subscribe();
     } catch {
       // Ignorar si realtime no está activo
@@ -108,11 +134,26 @@ export class LayoutClienteComponent implements OnDestroy {
           });
         }
       }
-    } catch {
-      // Fallback local
-    }
+    } catch {}
 
-    // 2. Notificaciones locales (fallback cuando no hay tabla o offline)
+    // 2. Notificaciones desde el puente cloud en Supabase (activity_logs __SYS_NOTIF__)
+    try {
+      const cloudNotifs = await this.waitlistService.obtenerNotificacionesCloudUsuario(user.id);
+      for (const cn of cloudNotifs) {
+        if (!listaCombinada.some(x => x.id === cn.id)) {
+          listaCombinada.push({
+            id: cn.id,
+            origen: 'activity_logs',
+            tipo: cn.tipo,
+            mensaje: cn.mensaje,
+            metadata: cn.metadata,
+            fecha: cn.fecha
+          });
+        }
+      }
+    } catch {}
+
+    // 3. Notificaciones locales (fallback cuando no hay tabla o offline)
     const locales = this.waitlistService.leerNotificacionesLocales(user.id);
     for (const loc of locales) {
       if (!listaCombinada.some(x => x.id === loc.id)) {
@@ -127,7 +168,7 @@ export class LayoutClienteComponent implements OnDestroy {
       }
     }
 
-    // 3. Suscripciones a preventas (movie_subscriptions)
+    // 4. Suscripciones a preventas (movie_subscriptions)
     try {
       const { data } = await this.supabase.client
         .from('movie_subscriptions')
@@ -146,9 +187,7 @@ export class LayoutClienteComponent implements OnDestroy {
           });
         }
       }
-    } catch {
-      // Ignorar
-    }
+    } catch {}
 
     listaCombinada.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
     this.notificaciones.set(listaCombinada);
@@ -167,6 +206,8 @@ export class LayoutClienteComponent implements OnDestroy {
       await this.supabase.client.from('movie_subscriptions').delete().eq('id', notif.id);
     } else if (notif.origen === 'user_notifications') {
       await this.supabase.client.from('user_notifications').delete().eq('id', notif.id);
+    } else if (notif.origen === 'activity_logs') {
+      await this.supabase.client.from('activity_logs').delete().eq('id', notif.id).eq('accion', '__SYS_NOTIF__');
     }
     this.waitlistService.eliminarNotificacionLocal(notif.id);
     this.notificaciones.update(list => list.filter(n => n.id !== notif.id));

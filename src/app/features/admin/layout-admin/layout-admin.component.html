@@ -25,8 +25,20 @@
         }
         @if (tieneAccesoSeccion('peliculas')) {
           <li>
-            <a routerLink="peliculas" routerLinkActive="active" (click)="closeSidebar()">
+            <a routerLink="peliculas/menu" routerLinkActive="active" (click)="closeSidebar()">
               <span>📹</span> Películas
+            </a>
+          </li>
+          <li>
+            <a routerLink="peliculas/propuestas" routerLinkActive="active" (click)="closeSidebar()" style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="display: flex; align-items: center; gap: 10px;">
+                <span>💡</span> Propuestas Clientes
+              </span>
+              @if (propuestasPendientesCount() > 0) {
+                <span style="background: #f59e0b; color: #0f172a; font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;">
+                  {{ propuestasPendientesCount() }}
+                </span>
+              }
             </a>
           </li>
         }

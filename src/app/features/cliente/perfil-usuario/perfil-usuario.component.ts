@@ -38,7 +38,7 @@ export class PerfilUsuarioComponent implements OnInit {
 
   async ngOnInit() {
     await this.rolesService.cargarRolesDesdeDB();
-    const user = this.authService.usuarioActual();
+    const user = await this.authService.ensureSessionLoaded();
     if (user) {
       const { data } = await this.supabase.client.from('profiles').select('puntos, credito_saldo, role').eq('id', user.id).single();
       if (data) {

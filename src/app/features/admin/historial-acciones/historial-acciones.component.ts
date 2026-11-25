@@ -26,15 +26,21 @@ export class HistorialAccionesComponent implements OnInit {
     const { data, error } = await this.supabase.client
       .from('activity_logs')
       .select('*, profiles(role, nombre)')
+      .not('accion', 'like', '__SYS_%')
       .order('fecha_hora', { ascending: false });
     
     if (error) {
       console.error('Error fetching activity logs:', error);
-      // Try fallback without profiles in case of relation error
-      const fallback = await this.supabase.client.from('activity_logs').select('*').order('fecha_hora', { ascending: false });
-      if (fallback.data) this.historial.set(fallback.data as any[]);
+      const fallback = await this.supabase.client
+        .from('activity_logs')
+        .select('*')
+        .not('accion', 'like', '__SYS_%')
+        .order('fecha_hora', { ascending: false });
+      if (fallback.data) {
+        this.historial.set((fallback.data as any[]).filter(h => !String(h.accion || '').startsWith('__SYS_')));
+      }
     } else if (data) {
-      this.historial.set(data as any[]);
+      this.historial.set((data as any[]).filter(h => !String(h.accion || '').startsWith('__SYS_')));
     }
   }
 

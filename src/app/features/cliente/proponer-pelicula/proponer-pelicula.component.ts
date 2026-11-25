@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -30,20 +30,34 @@ export class ProponerPeliculaComponent implements OnInit {
     motivo: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(600)]]
   });
 
-  async ngOnInit() {
-    await this.cargarEstadoPropuestas();
+  constructor() {
+    effect(() => {
+      const user = this.authService.usuarioActual();
+      if (user?.id) {
+        this.cargarEstadoPropuestas(user.id);
+      }
+    });
   }
 
-  async cargarEstadoPropuestas() {
-    const user = this.authService.usuarioActual();
-    if (!user) {
+  async ngOnInit() {
+    const user = await this.authService.ensureSessionLoaded();
+    if (user?.id) {
+      await this.cargarEstadoPropuestas(user.id);
+    } else {
+      this.loading.set(false);
+    }
+  }
+
+  async cargarEstadoPropuestas(userIdParam?: string) {
+    const userId = userIdParam || this.authService.usuarioActual()?.id;
+    if (!userId) {
       this.loading.set(false);
       return;
     }
 
     this.loading.set(true);
     try {
-      const todas = await this.propuestasService.obtenerPropuestasPorUsuario(user.id);
+      const todas = await this.propuestasService.obtenerPropuestasPorUsuario(userId);
       const activa = todas.find(p => p.estado === 'pendiente') || null;
       this.propuestaPendiente.set(activa);
       this.historialPropuestas.set(todas.filter(p => p.estado !== 'pendiente'));
@@ -60,7 +74,7 @@ export class ProponerPeliculaComponent implements OnInit {
       return;
     }
 
-    const user = this.authService.usuarioActual();
+    const user = await this.authService.ensureSessionLoaded();
     if (!user) {
       this.toast.error('Debés iniciar sesión para enviar una propuesta.');
       return;

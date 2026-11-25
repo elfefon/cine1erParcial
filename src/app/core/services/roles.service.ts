@@ -4,6 +4,7 @@ import { RolConfig, SeccionAdmin, SECCIONES_ADMIN_CATALOGO } from '../../models/
 
 const ROLES_STORAGE_KEY = 'cineutn_custom_roles_v1';
 const USERS_FALLBACK_KEY = 'cineutn_users_roles_v1';
+const SYS_ROLE_ACTION = '__SYS_ROLE__';
 
 export const ROLES_BASE_SISTEMA: RolConfig[] = [
   {
@@ -72,6 +73,7 @@ export class RolesService {
       mapa.set(r.nombre.toLowerCase(), { ...r });
     }
     for (const c of customRoles) {
+      if (!c || !c.nombre) continue;
       const key = c.nombre.toLowerCase();
       if (key === 'admin') {
         continue;
@@ -90,30 +92,63 @@ export class RolesService {
   }
 
   async cargarRoles(): Promise<RolConfig[]> {
+    const recolectados: RolConfig[] = [];
+
+    // 1. Intentar desde tabla dedicada custom_roles
     try {
       const { data, error } = await this.supabase.client
         .from('custom_roles')
         .select('*')
         .order('nombre', { ascending: true });
 
-      if (!error && data) {
-        const normalizados: RolConfig[] = data.map((d: any) => ({
-          id: d.id,
-          nombre: d.nombre,
-          descripcion: d.descripcion || '',
-          permisos: Array.isArray(d.permisos) ? d.permisos : [],
-          es_sistema: ['admin', 'gerente', 'empleado', 'cliente'].includes((d.nombre || '').toLowerCase()),
-          created_at: d.created_at
-        }));
-        this.combinarRoles(normalizados);
-        const soloCustom = this.roles().filter(r => !r.es_sistema || r.nombre === 'gerente');
-        this.guardarEnLocalStorage(soloCustom);
+      if (!error && data && data.length > 0) {
+        for (const d of data) {
+          recolectados.push({
+            id: d.id,
+            nombre: d.nombre,
+            descripcion: d.descripcion || '',
+            permisos: Array.isArray(d.permisos) ? d.permisos : [],
+            es_sistema: ['admin', 'gerente', 'empleado', 'cliente'].includes((d.nombre || '').toLowerCase()),
+            created_at: d.created_at
+          });
+        }
       }
-    } catch {
-      // Fallback silencioso a localStorage si la tabla custom_roles aún no fue creada
-    } finally {
-      this.cargado.set(true);
+    } catch {}
+
+    // 2. Leer también desde el puente cloud en Supabase (activity_logs)
+    try {
+      const { data: logsData, error: logsErr } = await this.supabase.client
+        .from('activity_logs')
+        .select('*')
+        .eq('accion', SYS_ROLE_ACTION)
+        .order('fecha_hora', { ascending: true });
+
+      if (!logsErr && logsData && logsData.length > 0) {
+        for (const row of logsData) {
+          try {
+            const parsed = JSON.parse(row.entidad_afectada || '{}');
+            if (parsed.nombre) {
+              recolectados.push({
+                id: row.id,
+                nombre: parsed.nombre,
+                descripcion: parsed.descripcion || '',
+                permisos: Array.isArray(parsed.permisos) ? parsed.permisos : [],
+                es_sistema: ['admin', 'gerente', 'empleado', 'cliente'].includes(parsed.nombre.toLowerCase()),
+                created_at: row.fecha_hora
+              });
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+
+    if (recolectados.length > 0) {
+      this.combinarRoles(recolectados);
+      const soloCustom = this.roles().filter(r => !r.es_sistema || r.nombre === 'gerente');
+      this.guardarEnLocalStorage(soloCustom);
     }
+
+    this.cargado.set(true);
     return this.roles();
   }
 
@@ -158,7 +193,7 @@ export class RolesService {
     try {
       const { data, error } = await this.supabase.client
         .from('profiles')
-        .select('id, nombre, apellido, username, email, role')
+        .select('*')
         .order('nombre', { ascending: true });
 
       if (!error && data && data.length > 0) {
@@ -189,25 +224,70 @@ export class RolesService {
       permisos: rol.permisos
     };
 
+    let guardadoDirecto = false;
+    let idFinal = rol.id;
+
     try {
       const existente = this.obtenerRolConfig(nombreNorm);
       if (existente?.id) {
-        await this.supabase.client
+        const { error } = await this.supabase.client
           .from('custom_roles')
           .update(payload)
           .eq('id', existente.id);
+        if (!error) guardadoDirecto = true;
       } else {
-        await this.supabase.client
+        const { data, error } = await this.supabase.client
           .from('custom_roles')
-          .upsert(payload, { onConflict: 'nombre' });
+          .upsert(payload, { onConflict: 'nombre' })
+          .select()
+          .single();
+        if (!error && data) {
+          guardadoDirecto = true;
+          idFinal = data.id;
+        }
       }
-    } catch {
-      // Actualizamos también en memoria y localStorage como respaldo
+    } catch {}
+
+    // Guardar en puente cloud en Supabase (activity_logs) si custom_roles tiene bloqueo RLS
+    if (!guardadoDirecto) {
+      try {
+        const { data: existentesLog } = await this.supabase.client
+          .from('activity_logs')
+          .select('*')
+          .eq('accion', SYS_ROLE_ACTION);
+
+        const matchLog = (existentesLog || []).find(row => {
+          try {
+            return JSON.parse(row.entidad_afectada || '{}').nombre?.toLowerCase() === nombreNorm;
+          } catch {
+            return false;
+          }
+        });
+
+        if (matchLog) {
+          await this.supabase.client
+            .from('activity_logs')
+            .update({ entidad_afectada: JSON.stringify(payload) })
+            .eq('id', matchLog.id);
+          idFinal = matchLog.id;
+        } else {
+          const { data: insLog } = await this.supabase.client
+            .from('activity_logs')
+            .insert({
+              accion: SYS_ROLE_ACTION,
+              entidad_afectada: JSON.stringify(payload)
+            })
+            .select()
+            .single();
+          if (insLog) idFinal = insLog.id;
+        }
+      } catch {}
     }
 
     const actuales = this.roles().filter(r => r.nombre.toLowerCase() !== nombreNorm);
     const actualizado: RolConfig = {
       ...rol,
+      id: idFinal,
       nombre: nombreNorm,
       es_sistema: ['admin', 'gerente', 'empleado', 'cliente'].includes(nombreNorm)
     };
@@ -230,9 +310,21 @@ export class RolesService {
       } else {
         await this.supabase.client.from('custom_roles').delete().eq('nombre', nombreNorm);
       }
-    } catch {
-      // Ignorar si la tabla remota no está aún
-    }
+    } catch {}
+
+    try {
+      const { data: logs } = await this.supabase.client
+        .from('activity_logs')
+        .select('*')
+        .eq('accion', SYS_ROLE_ACTION);
+      for (const row of logs || []) {
+        try {
+          if (JSON.parse(row.entidad_afectada || '{}').nombre?.toLowerCase() === nombreNorm) {
+            await this.supabase.client.from('activity_logs').delete().eq('id', row.id);
+          }
+        } catch {}
+      }
+    } catch {}
 
     const nuevaLista = this.roles().filter(r => r.nombre.toLowerCase() !== nombreNorm);
     this.roles.set(nuevaLista);

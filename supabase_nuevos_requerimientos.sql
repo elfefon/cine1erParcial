@@ -13,6 +13,12 @@ CREATE TABLE IF NOT EXISTS public.movie_proposals (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Deshabilitar RLS en las nuevas tablas para que el cliente Angular pueda consultar e insertar libremente
+ALTER TABLE public.movie_proposals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_roles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_entries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_notifications DISABLE ROW LEVEL SECURITY;
+
 -- Índice único parcial: garantiza a nivel base de datos que cada cliente solo pueda tener 1 propuesta pendiente a la vez
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_proposal_per_user
   ON public.movie_proposals (user_id)
@@ -27,6 +33,12 @@ CREATE TABLE IF NOT EXISTS public.custom_roles (
   es_sistema boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Deshabilitar RLS en las nuevas tablas para que el cliente Angular pueda consultar e insertar libremente
+ALTER TABLE public.movie_proposals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_roles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_entries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_notifications DISABLE ROW LEVEL SECURITY;
 
 -- Permitir roles personalizados en profiles.role si existiera un constraint restrictivo previo
 DO $$
@@ -57,6 +69,12 @@ CREATE TABLE IF NOT EXISTS public.user_notifications (
   metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Deshabilitar RLS en las nuevas tablas para que el cliente Angular pueda consultar e insertar libremente
+ALTER TABLE public.movie_proposals DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_roles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_entries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_notifications DISABLE ROW LEVEL SECURITY;
 
 -- 5. FUNCIÓN RPC: ROTAR EXPIRADOS Y NOTIFICAR AL SIGUIENTE EN LA LISTA DE ESPERA (15 MINUTOS)
 CREATE OR REPLACE FUNCTION public.notificar_siguiente_waitlist(p_showtime_id uuid)

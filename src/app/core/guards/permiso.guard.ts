@@ -5,14 +5,18 @@ import { RolesService } from '../services/roles.service';
 import { SeccionAdmin } from '../../models/rol.interface';
 
 export function permisoGuard(seccion: SeccionAdmin): CanMatchFn {
-  return () => {
+  return async () => {
     const authService = inject(AuthService);
     const rolesService = inject(RolesService);
     const router = inject(Router);
 
-    const user = authService.usuarioActual();
+    const user = await authService.ensureSessionLoaded();
     if (!user) {
       return router.createUrlTree(['/login']);
+    }
+
+    if (!rolesService.cargado()) {
+      await rolesService.cargarRoles();
     }
 
     if (rolesService.tienePermiso(user.role, seccion)) {
@@ -20,8 +24,9 @@ export function permisoGuard(seccion: SeccionAdmin): CanMatchFn {
     }
 
     const rutaAlternativa = rolesService.obtenerPrimeraRutaPermitida(user.role);
-    if (rutaAlternativa && rutaAlternativa !== `/admin/${seccion}`) {
-      return router.parseUrl(rutaAlternativa);
+    if (rutaAlternativa && rutaAlternativa !== seccion) {
+      const cleanSegment = rutaAlternativa.replace(/^\/admin\//, '');
+      return router.createUrlTree(['/admin', cleanSegment]);
     }
 
     return router.createUrlTree(['/']);

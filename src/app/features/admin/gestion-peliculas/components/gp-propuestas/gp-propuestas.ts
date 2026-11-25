@@ -20,6 +20,10 @@ export class GpPropuestasComponent implements OnInit {
   loading = signal<boolean>(true);
   filtroEstado = signal<'todas' | 'pendiente' | 'aceptada' | 'rechazada'>('pendiente');
 
+  pendientesCount = computed(() =>
+    this.propuestas().filter(p => p.estado === 'pendiente').length
+  );
+
   propuestasFiltradas = computed(() => {
     const estado = this.filtroEstado();
     const lista = this.propuestas();
@@ -36,6 +40,10 @@ export class GpPropuestasComponent implements OnInit {
     try {
       const data = await this.propuestasService.obtenerTodasLasPropuestas();
       this.propuestas.set(data);
+      // Si no hay pendientes pero sí hay propuestas históricas, mostramos todas para que el admin vea la lista
+      if (this.filtroEstado() === 'pendiente' && data.length > 0 && !data.some(p => p.estado === 'pendiente')) {
+        this.filtroEstado.set('todas');
+      }
     } finally {
       this.loading.set(false);
     }

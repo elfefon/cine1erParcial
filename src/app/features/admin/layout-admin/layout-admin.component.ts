@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RolesService } from '../../../core/services/roles.service';
+import { PropuestasService } from '../../../core/services/propuestas.service';
 import { SeccionAdmin } from '../../../models/rol.interface';
 
 @Component({
@@ -14,12 +15,18 @@ import { SeccionAdmin } from '../../../models/rol.interface';
 export class LayoutAdminComponent implements OnInit {
   authService = inject(AuthService);
   rolesService = inject(RolesService);
+  propuestasService = inject(PropuestasService);
   private router = inject(Router);
   
   isSidebarOpen = signal(false);
 
+  propuestasPendientesCount = computed(() =>
+    this.propuestasService.propuestas().filter(p => p.estado === 'pendiente').length
+  );
+
   async ngOnInit() {
     await this.rolesService.cargarRolesDesdeDB();
+    await this.propuestasService.obtenerTodasLasPropuestas();
   }
 
   tieneAccesoSeccion(seccion: SeccionAdmin): boolean {

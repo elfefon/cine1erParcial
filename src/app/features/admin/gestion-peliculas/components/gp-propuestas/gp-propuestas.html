@@ -7,20 +7,27 @@
       </p>
     </div>
 
-    <div style="display: flex; gap: 8px;">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
       <button
         type="button"
         class="btn-modificar"
         [style.background]="filtroEstado() === 'pendiente' ? 'var(--primary)' : 'rgba(255,255,255,0.08)'"
         (click)="filtroEstado.set('pendiente')">
-        ⏳ Pendientes
+        ⏳ Pendientes ({{ pendientesCount() }})
       </button>
       <button
         type="button"
         class="btn-modificar"
         [style.background]="filtroEstado() === 'todas' ? 'var(--primary)' : 'rgba(255,255,255,0.08)'"
         (click)="filtroEstado.set('todas')">
-        📋 Todas
+        📋 Todas ({{ propuestas().length }})
+      </button>
+      <button
+        type="button"
+        class="btn-modificar"
+        style="background: rgba(56, 189, 248, 0.16); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35);"
+        (click)="cargarPropuestas()">
+        🔄 Actualizar
       </button>
     </div>
   </div>

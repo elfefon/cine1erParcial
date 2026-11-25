@@ -6,6 +6,8 @@ import { WaitlistEntry } from '../../models/waitlist.interface';
 
 const WAITLIST_STORAGE_KEY = 'cineutn_waitlist_v1';
 const NOTIFS_STORAGE_KEY = 'cineutn_user_notifications_v1';
+const SYS_WAITLIST_ACTION = '__SYS_WAITLIST__';
+const SYS_NOTIF_ACTION = '__SYS_NOTIF__';
 
 export interface UserNotificationItem {
   id: string;
@@ -22,7 +24,7 @@ export interface UserNotificationItem {
     monto_acreditado?: number;
     expira_at?: string;
   };
-  origen_tabla?: 'user_notifications' | 'movie_subscriptions' | 'local';
+  origen_tabla?: 'user_notifications' | 'movie_subscriptions' | 'activity_logs' | 'local';
 }
 
 @Injectable({
@@ -51,6 +53,53 @@ export class WaitlistService {
     } catch {}
   }
 
+  private mapearWaitlistDesdeLog(row: any): WaitlistEntry | null {
+    try {
+      const parsed = JSON.parse(row.entidad_afectada || '{}');
+      if (!parsed.showtime_id || !parsed.user_id) return null;
+      return {
+        id: row.id,
+        showtime_id: parsed.showtime_id,
+        user_id: parsed.user_id,
+        estado: parsed.estado || 'esperando',
+        notificado_at: parsed.notificado_at || null,
+        expira_at: parsed.expira_at || null,
+        created_at: parsed.created_at || row.fecha_hora,
+        profiles: row.profiles || { nombre: parsed.usuario_nombre || 'Usuario' }
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async leerWaitlistCloudBridge(showtimeId?: string, userId?: string): Promise<WaitlistEntry[]> {
+    try {
+      let query = this.supabase.client
+        .from('activity_logs')
+        .select('*, profiles(nombre)')
+        .eq('accion', SYS_WAITLIST_ACTION)
+        .order('fecha_hora', { ascending: true });
+
+      if (showtimeId) {
+        query = query.eq('entidad_id', showtimeId);
+      }
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error } = await query;
+      if (!error && data) {
+        const res: WaitlistEntry[] = [];
+        for (const r of data) {
+          const m = this.mapearWaitlistDesdeLog(r);
+          if (m) res.push(m);
+        }
+        return res;
+      }
+    } catch {}
+    return [];
+  }
+
   leerNotificacionesLocales(userId?: string): UserNotificationItem[] {
     try {
       const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
@@ -59,6 +108,39 @@ export class WaitlistService {
     } catch {
       return [];
     }
+  }
+
+  async obtenerNotificacionesCloudUsuario(userId: string): Promise<UserNotificationItem[]> {
+    const resultado: UserNotificationItem[] = [];
+    try {
+      const { data, error } = await this.supabase.client
+        .from('activity_logs')
+        .select('*')
+        .eq('accion', SYS_NOTIF_ACTION)
+        .eq('user_id', userId)
+        .order('fecha_hora', { ascending: false });
+
+      if (!error && data) {
+        for (const row of data) {
+          try {
+            const parsed = JSON.parse(row.entidad_afectada || '{}');
+            if (parsed.mensaje) {
+              resultado.push({
+                id: row.id,
+                user_id: row.user_id,
+                tipo: parsed.tipo || 'PREVENTA',
+                mensaje: parsed.mensaje,
+                fecha: parsed.created_at || row.fecha_hora,
+                leida: parsed.leida ?? false,
+                metadata: parsed.metadata,
+                origen_tabla: 'activity_logs'
+              });
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+    return resultado;
   }
 
   guardarNotificacionLocal(notif: UserNotificationItem) {
@@ -129,18 +211,20 @@ export class WaitlistService {
     mensaje: string;
     metadata?: UserNotificationItem['metadata'];
   }): Promise<void> {
+    const ahoraIso = new Date().toISOString();
     const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     const item: UserNotificationItem = {
       id,
       user_id: payload.user_id,
       tipo: payload.tipo,
       mensaje: payload.mensaje,
-      fecha: new Date().toISOString(),
+      fecha: ahoraIso,
       leida: false,
       metadata: payload.metadata,
       origen_tabla: 'local'
     };
 
+    let guardadaDirecta = false;
     try {
       const { data, error } = await this.supabase.client
         .from('user_notifications')
@@ -157,16 +241,62 @@ export class WaitlistService {
       if (!error && data) {
         item.id = data.id;
         item.origen_tabla = 'user_notifications';
+        guardadaDirecta = true;
       }
     } catch {}
 
+    if (!guardadaDirecta) {
+      try {
+        const { data: logData, error: logErr } = await this.supabase.client
+          .from('activity_logs')
+          .insert({
+            user_id: payload.user_id,
+            accion: SYS_NOTIF_ACTION,
+            entidad_afectada: JSON.stringify({
+              tipo: payload.tipo,
+              mensaje: payload.mensaje,
+              metadata: payload.metadata || {},
+              leida: false,
+              created_at: ahoraIso
+            })
+          })
+          .select()
+          .single();
+
+        if (!logErr && logData) {
+          item.id = logData.id;
+          item.origen_tabla = 'activity_logs';
+        }
+      } catch {}
+    }
+
     this.guardarNotificacionLocal(item);
+  }
+
+  private async actualizarWaitlistEnCloudBridge(entry: WaitlistEntry): Promise<void> {
+    if (!entry.id) return;
+    try {
+      await this.supabase.client
+        .from('activity_logs')
+        .update({
+          entidad_afectada: JSON.stringify({
+            showtime_id: entry.showtime_id,
+            user_id: entry.user_id,
+            estado: entry.estado,
+            notificado_at: entry.notificado_at || null,
+            expira_at: entry.expira_at || null,
+            created_at: entry.created_at
+          })
+        })
+        .eq('id', entry.id)
+        .eq('accion', SYS_WAITLIST_ACTION);
+    } catch {}
   }
 
   async verificarYRotarExpirados(showtimeId?: string): Promise<void> {
     const ahora = new Date();
 
-    // 1. Intentar rotación en Supabase
+    // 1. Intentar rotación en tabla waitlist_entries
     try {
       let query = this.supabase.client
         .from('waitlist_entries')
@@ -192,10 +322,20 @@ export class WaitlistService {
       }
     } catch {}
 
-    // 2. Rotación sobre respaldo local
+    // 2. Rotación sobre puente cloud (activity_logs)
+    const cloudEntries = await this.leerWaitlistCloudBridge(showtimeId);
+    const funcionesARotar = new Set<string>();
+    for (const item of cloudEntries) {
+      if (item.estado === 'notificado' && item.expira_at && new Date(item.expira_at) <= ahora) {
+        item.estado = 'expirado';
+        await this.actualizarWaitlistEnCloudBridge(item);
+        funcionesARotar.add(item.showtime_id);
+      }
+    }
+
+    // 3. Rotación sobre respaldo local
     const locales = this.leerWaitlistLocal();
     let huboCambios = false;
-    const funcionesARotar = new Set<string>();
 
     for (const item of locales) {
       if (
@@ -212,15 +352,19 @@ export class WaitlistService {
 
     if (huboCambios) {
       this.guardarWaitlistLocal(locales);
-      for (const stId of funcionesARotar) {
-        await this.notificarSiguienteEnLista(stId);
-      }
+    }
+
+    for (const stId of funcionesARotar) {
+      await this.notificarSiguienteEnLista(stId);
     }
   }
 
   async obtenerColaPorFuncion(showtimeId: string): Promise<WaitlistEntry[]> {
     await this.verificarYRotarExpirados(showtimeId);
 
+    const mapa = new Map<string, WaitlistEntry>();
+
+    // 1. Leer de tabla waitlist_entries
     try {
       const { data, error } = await this.supabase.client
         .from('waitlist_entries')
@@ -229,22 +373,36 @@ export class WaitlistService {
         .in('estado', ['notificado', 'esperando', 'en_espera'])
         .order('created_at', { ascending: true });
 
-      if (!error && data) {
-        return (data as WaitlistEntry[]).map((item, idx) => ({
-          ...item,
-          posicion: idx + 1,
-          minutos_restantes: item.expira_at
-            ? Math.max(0, Math.ceil((new Date(item.expira_at).getTime() - Date.now()) / 60000))
-            : undefined
-        }));
+      if (!error && data && data.length > 0) {
+        for (const item of data as WaitlistEntry[]) {
+          mapa.set(item.user_id, item);
+        }
       }
     } catch {}
 
-    const locales = this.leerWaitlistLocal()
-      .filter(w => w.showtime_id === showtimeId && ['notificado', 'esperando', 'en_espera'].includes(w.estado))
-      .sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+    // 2. Leer del puente cloud en Supabase (activity_logs)
+    const cloudBridge = await this.leerWaitlistCloudBridge(showtimeId);
+    for (const item of cloudBridge) {
+      if (['notificado', 'esperando', 'en_espera'].includes(item.estado) && !mapa.has(item.user_id)) {
+        mapa.set(item.user_id, item);
+      }
+    }
 
-    return locales.map((item, idx) => ({
+    // 3. Leer de localStorage si aún no está
+    const locales = this.leerWaitlistLocal().filter(
+      w => w.showtime_id === showtimeId && ['notificado', 'esperando', 'en_espera'].includes(w.estado)
+    );
+    for (const item of locales) {
+      if (!mapa.has(item.user_id)) {
+        mapa.set(item.user_id, item);
+      }
+    }
+
+    const ordenados = Array.from(mapa.values()).sort(
+      (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+    );
+
+    return ordenados.map((item, idx) => ({
       ...item,
       posicion: idx + 1,
       minutos_restantes: item.expira_at
@@ -254,7 +412,7 @@ export class WaitlistService {
   }
 
   async inscribirseEnListaEspera(showtimeId: string): Promise<{ ok: boolean; mensaje: string; entry?: WaitlistEntry }> {
-    const user = this.auth.usuarioActual();
+    const user = await this.auth.ensureSessionLoaded();
     if (!user) {
       return { ok: false, mensaje: 'Debés iniciar sesión para anotarte en la lista de espera.' };
     }
@@ -299,6 +457,7 @@ export class WaitlistService {
       showtimes: showtimeContext
     };
 
+    let guardadoDirecto = false;
     try {
       const { data, error } = await this.supabase.client
         .from('waitlist_entries')
@@ -312,8 +471,35 @@ export class WaitlistService {
 
       if (!error && data) {
         nuevo.id = data.id;
+        guardadoDirecto = true;
       }
     } catch {}
+
+    if (!guardadoDirecto) {
+      try {
+        const { data: logData, error: logErr } = await this.supabase.client
+          .from('activity_logs')
+          .insert({
+            user_id: userId,
+            entidad_id: showtimeId,
+            accion: SYS_WAITLIST_ACTION,
+            entidad_afectada: JSON.stringify({
+              showtime_id: showtimeId,
+              user_id: userId,
+              estado: 'esperando',
+              notificado_at: null,
+              expira_at: null,
+              created_at: ahoraIso
+            })
+          })
+          .select()
+          .single();
+
+        if (!logErr && logData) {
+          nuevo.id = logData.id;
+        }
+      } catch {}
+    }
 
     const locales = this.leerWaitlistLocal();
     this.guardarWaitlistLocal([...locales, nuevo]);
@@ -326,6 +512,9 @@ export class WaitlistService {
       return { ok: false, mensaje: 'No se encontró el registro en la lista de espera.' };
     }
 
+    let eraNotificado = false;
+    let stId = showtimeId;
+
     try {
       await this.supabase.client
         .from('waitlist_entries')
@@ -333,10 +522,32 @@ export class WaitlistService {
         .eq('id', entryId);
     } catch {}
 
+    try {
+      const { data: logRow } = await this.supabase.client
+        .from('activity_logs')
+        .select('*')
+        .eq('id', entryId)
+        .eq('accion', SYS_WAITLIST_ACTION)
+        .maybeSingle();
+
+      if (logRow) {
+        const mapped = this.mapearWaitlistDesdeLog(logRow);
+        if (mapped) {
+          if (mapped.estado === 'notificado') eraNotificado = true;
+          if (!stId) stId = mapped.showtime_id;
+        }
+        await this.supabase.client
+          .from('activity_logs')
+          .delete()
+          .eq('id', entryId)
+          .eq('accion', SYS_WAITLIST_ACTION);
+      }
+    } catch {}
+
     const locales = this.leerWaitlistLocal();
     const target = locales.find(w => w.id === entryId);
-    const eraNotificado = target?.estado === 'notificado';
-    const stId = showtimeId || target?.showtime_id;
+    if (target?.estado === 'notificado') eraNotificado = true;
+    if (!stId) stId = target?.showtime_id;
 
     const filtrados = locales.filter(w => w.id !== entryId);
     this.guardarWaitlistLocal(filtrados);
@@ -376,78 +587,68 @@ export class WaitlistService {
       }
     } catch {}
 
-    let promovido: WaitlistEntry | null = null;
+    const cola = await this.obtenerColaPorFuncion(showtimeId);
+    const yaNotificado = cola.find(c => c.estado === 'notificado');
+    if (yaNotificado) {
+      return yaNotificado;
+    }
+
+    const primeroEnEspera = cola.find(c => ['esperando', 'en_espera'].includes(c.estado));
+    if (!primeroEnEspera) {
+      return null;
+    }
+
+    const promovido: WaitlistEntry = {
+      ...primeroEnEspera,
+      estado: 'notificado',
+      notificado_at: ahoraIso,
+      expira_at: expiraIso
+    };
 
     try {
-      const { data: enEspera } = await this.supabase.client
+      await this.supabase.client
         .from('waitlist_entries')
-        .select('*')
-        .eq('showtime_id', showtimeId)
-        .in('estado', ['esperando', 'en_espera'])
-        .order('created_at', { ascending: true })
-        .limit(1);
-
-      if (enEspera && enEspera.length > 0) {
-        const primero = enEspera[0];
-        const { data: actualizado, error } = await this.supabase.client
-          .from('waitlist_entries')
-          .update({
-            estado: 'notificado',
-            notificado_at: ahoraIso,
-            expira_at: expiraIso
-          })
-          .eq('id', primero.id)
-          .select()
-          .single();
-
-        if (!error && actualizado) {
-          promovido = actualizado as WaitlistEntry;
-        }
-      }
+        .update({
+          estado: 'notificado',
+          notificado_at: ahoraIso,
+          expira_at: expiraIso
+        })
+        .eq('id', promovido.id);
     } catch {}
 
-    const locales = this.leerWaitlistLocal();
-    const candidatosLocal = locales
-      .filter(w => w.showtime_id === showtimeId && ['esperando', 'en_espera'].includes(w.estado))
-      .sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+    await this.actualizarWaitlistEnCloudBridge(promovido);
 
-    if (candidatosLocal.length > 0) {
-      const primeroLocal = candidatosLocal[0];
-      primeroLocal.estado = 'notificado';
-      primeroLocal.notificado_at = ahoraIso;
-      primeroLocal.expira_at = expiraIso;
-      this.guardarWaitlistLocal(locales);
-      if (!promovido) {
-        promovido = primeroLocal;
+    const locales = this.leerWaitlistLocal().map(w =>
+      w.id === promovido.id || (w.showtime_id === showtimeId && w.user_id === promovido.user_id)
+        ? { ...w, estado: 'notificado' as const, notificado_at: ahoraIso, expira_at: expiraIso }
+        : w
+    );
+    this.guardarWaitlistLocal(locales);
+
+    const msg = `🚨 ¡Se liberaron butacas para "${peliculaNombre}" (${fechaFuncionStr})! Sos el #1 en la lista de espera. Tenés 15 minutos (hasta las ${expira.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}) para comprar tu entrada antes de que pase al siguiente.`;
+
+    await this.crearNotificacionUsuario({
+      user_id: promovido.user_id,
+      tipo: 'WAITLIST_TURNO',
+      mensaje: msg,
+      metadata: {
+        movie_id: movieId,
+        movie_nombre: peliculaNombre,
+        showtime_id: showtimeId,
+        expira_at: expiraIso
       }
-    }
+    });
 
-    if (promovido) {
-      const msg = `🚨 ¡Se liberaron butacas para "${peliculaNombre}" (${fechaFuncionStr})! Sos el #1 en la lista de espera. Tenés 15 minutos (hasta las ${expira.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}) para comprar tu entrada antes de que pase al siguiente.`;
-
-      await this.crearNotificacionUsuario({
-        user_id: promovido.user_id,
-        tipo: 'WAITLIST_TURNO',
-        mensaje: msg,
-        metadata: {
-          movie_id: movieId,
-          movie_nombre: peliculaNombre,
-          showtime_id: showtimeId,
-          expira_at: expiraIso
-        }
-      });
-
-      try {
-        const { data: authUser } = await this.supabase.auth.getUser();
-        if (authUser?.user?.id === promovido.user_id) {
-          await this.dispararPushNotification(
-            '🎟️ ¡Turno liberado en Lista de Espera!',
-            msg,
-            movieId ? `/reserva/${movieId}?showtime=${showtimeId}` : '/perfil'
-          );
-        }
-      } catch {}
-    }
+    try {
+      const { data: authUser } = await this.supabase.auth.getUser();
+      if (authUser?.user?.id === promovido.user_id) {
+        await this.dispararPushNotification(
+          '🎟️ ¡Turno liberado en Lista de Espera!',
+          msg,
+          movieId ? `/reserva/${movieId}?showtime=${showtimeId}` : '/perfil'
+        );
+      }
+    } catch {}
 
     return promovido;
   }
@@ -462,6 +663,14 @@ export class WaitlistService {
         .in('estado', ['notificado', 'esperando', 'en_espera']);
     } catch {}
 
+    const cloudEntries = await this.leerWaitlistCloudBridge(showtimeId, userId);
+    for (const entry of cloudEntries) {
+      if (['notificado', 'esperando', 'en_espera'].includes(entry.estado)) {
+        entry.estado = 'comprado';
+        await this.actualizarWaitlistEnCloudBridge(entry);
+      }
+    }
+
     const locales = this.leerWaitlistLocal().map(w =>
       w.showtime_id === showtimeId && w.user_id === userId && ['notificado', 'esperando', 'en_espera'].includes(w.estado)
         ? { ...w, estado: 'comprado' as const }
@@ -473,7 +682,7 @@ export class WaitlistService {
   async obtenerListasDeUsuarioConPosicion(userId: string): Promise<WaitlistEntry[]> {
     await this.verificarYRotarExpirados();
 
-    let entradasUsuario: WaitlistEntry[] = [];
+    const mapaPorShowtime = new Map<string, WaitlistEntry>();
 
     try {
       const { data, error } = await this.supabase.client
@@ -483,19 +692,31 @@ export class WaitlistService {
         .in('estado', ['notificado', 'esperando', 'en_espera'])
         .order('created_at', { ascending: true });
 
-      if (!error && data) {
-        entradasUsuario = data as WaitlistEntry[];
+      if (!error && data && data.length > 0) {
+        for (const item of data as WaitlistEntry[]) {
+          mapaPorShowtime.set(item.showtime_id, item);
+        }
       }
     } catch {}
 
-    if (entradasUsuario.length === 0) {
-      entradasUsuario = this.leerWaitlistLocal().filter(
-        w => w.user_id === userId && ['notificado', 'esperando', 'en_espera'].includes(w.estado)
-      );
+    const cloudEntries = await this.leerWaitlistCloudBridge(undefined, userId);
+    for (const item of cloudEntries) {
+      if (['notificado', 'esperando', 'en_espera'].includes(item.estado) && !mapaPorShowtime.has(item.showtime_id)) {
+        mapaPorShowtime.set(item.showtime_id, item);
+      }
+    }
+
+    const locales = this.leerWaitlistLocal().filter(
+      w => w.user_id === userId && ['notificado', 'esperando', 'en_espera'].includes(w.estado)
+    );
+    for (const item of locales) {
+      if (!mapaPorShowtime.has(item.showtime_id)) {
+        mapaPorShowtime.set(item.showtime_id, item);
+      }
     }
 
     const resultado: WaitlistEntry[] = [];
-    for (const entry of entradasUsuario) {
+    for (const entry of mapaPorShowtime.values()) {
       const colaFuncion = await this.obtenerColaPorFuncion(entry.showtime_id);
       const miItemEnCola = colaFuncion.find(c => c.user_id === userId);
       const posicion = miItemEnCola?.posicion || 1;
@@ -519,6 +740,7 @@ export class WaitlistService {
 
       resultado.push({
         ...entry,
+        id: miItemEnCola?.id || entry.id,
         estado: miItemEnCola?.estado || entry.estado,
         expira_at: expiraAt,
         posicion,
@@ -537,25 +759,45 @@ export class WaitlistService {
       for (const id of ids) conteo[id] = 0;
     }
 
+    const vistos = new Set<string>();
+
     try {
       const { data, error } = await this.supabase.client
         .from('waitlist_entries')
         .select('showtime_id, user_id')
         .in('estado', ['notificado', 'esperando', 'en_espera']);
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         for (const row of data) {
-          conteo[row.showtime_id] = (conteo[row.showtime_id] || 0) + 1;
+          const k = `${row.showtime_id}_${row.user_id}`;
+          if (!vistos.has(k)) {
+            vistos.add(k);
+            conteo[row.showtime_id] = (conteo[row.showtime_id] || 0) + 1;
+          }
         }
-        return conteo;
       }
     } catch {}
+
+    const cloudEntries = await this.leerWaitlistCloudBridge();
+    for (const row of cloudEntries) {
+      if (['notificado', 'esperando', 'en_espera'].includes(row.estado)) {
+        const k = `${row.showtime_id}_${row.user_id}`;
+        if (!vistos.has(k)) {
+          vistos.add(k);
+          conteo[row.showtime_id] = (conteo[row.showtime_id] || 0) + 1;
+        }
+      }
+    }
 
     const locales = this.leerWaitlistLocal().filter(w =>
       ['notificado', 'esperando', 'en_espera'].includes(w.estado)
     );
     for (const row of locales) {
-      conteo[row.showtime_id] = (conteo[row.showtime_id] || 0) + 1;
+      const k = `${row.showtime_id}_${row.user_id}`;
+      if (!vistos.has(k)) {
+        vistos.add(k);
+        conteo[row.showtime_id] = (conteo[row.showtime_id] || 0) + 1;
+      }
     }
     return conteo;
   }

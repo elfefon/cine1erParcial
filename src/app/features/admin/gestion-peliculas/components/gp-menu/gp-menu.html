@@ -17,7 +17,12 @@
       <div class="hub-buttons">
         <button routerLink="../crear-pelicula">Crear</button>
         <button routerLink="../ver-peliculas">Ver</button>
-        <button routerLink="../propuestas">💡 Propuestas de Clientes</button>
+        <button routerLink="../propuestas">
+          💡 Propuestas de Clientes
+          @if (pendientesCount() > 0) {
+            ({{ pendientesCount() }} pendientes)
+          }
+        </button>
       </div>
     </div>
     <div class="hub-card">
